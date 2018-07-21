@@ -1,0 +1,15 @@
+{
+  "name": "graph-search-visualizer",
+  "version": "0.1.0",
+  "description": "visualizer for graph search algorithms",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kevin C. Gall",
+  "license": "ISC",
+  "dependencies": {
+    "pixi.js": "^4.8.1",
+    "thrift": "^0.11.0"
+  }
+}

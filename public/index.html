@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Graph Search Visualizer</title>
+    <script src="./js/lib/pixi.js" type="module"></script>
+    <script src="./js/lib/thrift/thrift.js" type="module"></script>
+    <script src="./js/lib/thrift/gen-js/Broker.js" type="module"></script>
+    <script src="./js/lib/thrift/gen-js/visualizer_types.js" type="module"></script>
+    <script src="./js/visualizer.js" type="module"></script>
+    <script src="./js/main.js" type="module" async=true></script>
+    <script type="module">
+      import {visualizer} from "./js/main.js";
+
+      window.visualizer = visualizer;
+    </script>
+  </head>
+  <body>
+    <h1>Visualizer for Graph Search Algorithms</h1>
+    <div id="grid-container" style="border: 1px solid gray; height: 1000px; width:1000px"></div>
+  </body>
+</html>
