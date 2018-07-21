@@ -3,10 +3,15 @@
 //
 // DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 //
+"use strict";
 
-import Thrift from "../thrift.js";
+var thrift = require('thrift');
+var Thrift = thrift.Thrift;
+var Q = thrift.Q;
 
-const Location = function(args) {
+
+var ttypes = module.exports = {};
+var Location = module.exports.Location = function(args) {
   this.x = null;
   this.y = null;
   if (args) {
@@ -38,14 +43,14 @@ Location.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.I32) {
-        this.x = input.readI32().value;
+        this.x = input.readI32();
       } else {
         input.skip(ftype);
       }
       break;
       case 2:
       if (ftype == Thrift.Type.I32) {
-        this.y = input.readI32().value;
+        this.y = input.readI32();
       } else {
         input.skip(ftype);
       }
@@ -76,7 +81,7 @@ Location.prototype.write = function(output) {
   return;
 };
 
-const Iteration = function(args) {
+var Iteration = module.exports.Iteration = function(args) {
   this.clearPrevious = null;
   this.agentLocation = null;
   this.newEnvelopeNodesCells = null;
@@ -88,17 +93,17 @@ const Iteration = function(args) {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field clearPrevious is unset!');
     }
     if (args.agentLocation !== undefined && args.agentLocation !== null) {
-      this.agentLocation = new Location(args.agentLocation);
+      this.agentLocation = new ttypes.Location(args.agentLocation);
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field agentLocation is unset!');
     }
     if (args.newEnvelopeNodesCells !== undefined && args.newEnvelopeNodesCells !== null) {
-      this.newEnvelopeNodesCells = Thrift.copyList(args.newEnvelopeNodesCells, [Location]);
+      this.newEnvelopeNodesCells = Thrift.copyList(args.newEnvelopeNodesCells, [ttypes.Location]);
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field newEnvelopeNodesCells is unset!');
     }
     if (args.projectedPath !== undefined && args.projectedPath !== null) {
-      this.projectedPath = Thrift.copyList(args.projectedPath, [Location]);
+      this.projectedPath = Thrift.copyList(args.projectedPath, [ttypes.Location]);
     }
   }
 };
@@ -118,14 +123,14 @@ Iteration.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.BOOL) {
-        this.clearPrevious = input.readBool().value;
+        this.clearPrevious = input.readBool();
       } else {
         input.skip(ftype);
       }
       break;
       case 2:
       if (ftype == Thrift.Type.STRUCT) {
-        this.agentLocation = new Location();
+        this.agentLocation = new ttypes.Location();
         this.agentLocation.read(input);
       } else {
         input.skip(ftype);
@@ -143,7 +148,7 @@ Iteration.prototype.read = function(input) {
         for (var _i5 = 0; _i5 < _size0; ++_i5)
         {
           var elem6 = null;
-          elem6 = new Location();
+          elem6 = new ttypes.Location();
           elem6.read(input);
           this.newEnvelopeNodesCells.push(elem6);
         }
@@ -164,7 +169,7 @@ Iteration.prototype.read = function(input) {
         for (var _i12 = 0; _i12 < _size7; ++_i12)
         {
           var elem13 = null;
-          elem13 = new Location();
+          elem13 = new ttypes.Location();
           elem13.read(input);
           this.projectedPath.push(elem13);
         }
@@ -227,12 +232,12 @@ Iteration.prototype.write = function(output) {
   return;
 };
 
-const IterationBundle = function(args) {
+var IterationBundle = module.exports.IterationBundle = function(args) {
   this.iterations = null;
   this.bufferIsFlushed = null;
   if (args) {
     if (args.iterations !== undefined && args.iterations !== null) {
-      this.iterations = Thrift.copyList(args.iterations, [Iteration]);
+      this.iterations = Thrift.copyList(args.iterations, [ttypes.Iteration]);
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field iterations is unset!');
     }
@@ -269,7 +274,7 @@ IterationBundle.prototype.read = function(input) {
         for (var _i21 = 0; _i21 < _size16; ++_i21)
         {
           var elem22 = null;
-          elem22 = new Iteration();
+          elem22 = new ttypes.Iteration();
           elem22.read(input);
           this.iterations.push(elem22);
         }
@@ -280,7 +285,7 @@ IterationBundle.prototype.read = function(input) {
       break;
       case 2:
       if (ftype == Thrift.Type.BOOL) {
-        this.bufferIsFlushed = input.readBool().value;
+        this.bufferIsFlushed = input.readBool();
       } else {
         input.skip(ftype);
       }
@@ -320,7 +325,7 @@ IterationBundle.prototype.write = function(output) {
   return;
 };
 
-const Init = function(args) {
+var Init = module.exports.Init = function(args) {
   this.width = null;
   this.height = null;
   this.start = null;
@@ -338,17 +343,17 @@ const Init = function(args) {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field height is unset!');
     }
     if (args.start !== undefined && args.start !== null) {
-      this.start = new Location(args.start);
+      this.start = new ttypes.Location(args.start);
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field start is unset!');
     }
     if (args.goals !== undefined && args.goals !== null) {
-      this.goals = Thrift.copyList(args.goals, [Location]);
+      this.goals = Thrift.copyList(args.goals, [ttypes.Location]);
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field goals is unset!');
     }
     if (args.blockedCells !== undefined && args.blockedCells !== null) {
-      this.blockedCells = Thrift.copyList(args.blockedCells, [Location]);
+      this.blockedCells = Thrift.copyList(args.blockedCells, [ttypes.Location]);
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field blockedCells is unset!');
     }
@@ -370,21 +375,21 @@ Init.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.I32) {
-        this.width = input.readI32().value;
+        this.width = input.readI32();
       } else {
         input.skip(ftype);
       }
       break;
       case 2:
       if (ftype == Thrift.Type.I32) {
-        this.height = input.readI32().value;
+        this.height = input.readI32();
       } else {
         input.skip(ftype);
       }
       break;
       case 3:
       if (ftype == Thrift.Type.STRUCT) {
-        this.start = new Location();
+        this.start = new ttypes.Location();
         this.start.read(input);
       } else {
         input.skip(ftype);
@@ -402,7 +407,7 @@ Init.prototype.read = function(input) {
         for (var _i29 = 0; _i29 < _size24; ++_i29)
         {
           var elem30 = null;
-          elem30 = new Location();
+          elem30 = new ttypes.Location();
           elem30.read(input);
           this.goals.push(elem30);
         }
@@ -423,7 +428,7 @@ Init.prototype.read = function(input) {
         for (var _i36 = 0; _i36 < _size31; ++_i36)
         {
           var elem37 = null;
-          elem37 = new Location();
+          elem37 = new ttypes.Location();
           elem37.read(input);
           this.blockedCells.push(elem37);
         }
@@ -491,7 +496,9 @@ Init.prototype.write = function(output) {
   return;
 };
 
-const NoDataException = function(args) {
+var NoDataException = module.exports.NoDataException = function(args) {
+  Thrift.TException.call(this, "NoDataException");
+  this.name = "NoDataException";
 };
 Thrift.inherits(NoDataException, Thrift.TException);
 NoDataException.prototype.name = 'NoDataException';
@@ -520,4 +527,3 @@ NoDataException.prototype.write = function(output) {
   return;
 };
 
-export {Location, Iteration, IterationBundle, Init, NoDataException};

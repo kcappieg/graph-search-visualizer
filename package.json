@@ -4,11 +4,14 @@
   "description": "visualizer for graph search algorithms",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start-win": "set MODE=PRODUCTION && node index.js",
+    "dev-win": "set MODE=DEVELOPMENT && node index.js"
   },
   "author": "Kevin C. Gall",
   "license": "ISC",
   "dependencies": {
+    "express": "^4.16.3",
     "pixi.js": "^4.8.1",
     "thrift": "^0.11.0"
   }

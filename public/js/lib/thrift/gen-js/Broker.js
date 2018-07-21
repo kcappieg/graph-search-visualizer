@@ -4,10 +4,10 @@
 // DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 //
 
+import Thrift from "../thrift.js";
+import {Location, Iteration, IterationBundle, Init, NoDataException} from "./visualizer_types.js"
 
 //HELPER FUNCTIONS AND STRUCTURES
-
-import Thrift from "../thrift.js";
 
 const Broker_initialize_args = function(args) {
   this.initData = null;

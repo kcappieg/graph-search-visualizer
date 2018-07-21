@@ -97,6 +97,13 @@ export class Visualizer {
     this.rescale();
   }
 
+  /**
+   *  Exposes PIXI.js ticker to queue up animation functions
+   */
+  get ticker() {
+    return this._app.ticker;
+  }
+
   addGoal(x, y) {
     const newGoal = initCircle(this.GOAL);
     newGoal.position = new PIXI.Point(x * CELL_SIDE_LENGTH, y * CELL_SIDE_LENGTH);

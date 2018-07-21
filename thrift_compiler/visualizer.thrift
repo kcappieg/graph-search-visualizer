@@ -1,12 +1,13 @@
 struct Location {
-  1: required i64 x,
-  2: required i64 y
+  1: required i32 x,
+  2: required i32 y
 }
 
 struct Iteration {
   1: required bool clearPrevious,
-  2: required set<Location> newEnvelopeNodesCells,
-  3: optional set<Location> projectedPath
+  2: required Location agentLocation,
+  3: required set<Location> newEnvelopeNodesCells,
+  4: optional set<Location> projectedPath
 }
 
 struct IterationBundle {
@@ -15,9 +16,11 @@ struct IterationBundle {
 }
 
 struct Init {
-  1: required i64 width,
-  2: required i64 height,
-  3: required set<Location> blockedCells
+  1: required i32 width,
+  2: required i32 height,
+  3: required Location start,
+  4: required list<Location> goals,
+  5: required set<Location> blockedCells
 }
 
 exception NoDataException{}
