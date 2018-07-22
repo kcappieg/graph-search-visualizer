@@ -4,7 +4,7 @@ import Thrift from "./lib/thrift/thrift.js";
 import {NoDataException} from "./lib/thrift/gen-js/visualizer_types.js";
 import BrokerClient from "./lib/thrift/gen-js/Broker.js";
 
-const WINDOW_TIMEOUT = 100;
+const WINDOW_TIMEOUT = 250;
 let iterations = [];
 let nextIteration = 0;
 

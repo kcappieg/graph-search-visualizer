@@ -4,9 +4,9 @@ const types = require('./gen-nodejs/visualizer_types.js');
 const ITERATION_CHUNK_SIZE = 10; //10 iterations at a time
 const MAX_BUFFER_SIZE = 1000;
 
-let privateInitData = getDemoInit();
+let privateInitData = null;
 const buffers = [];
-buffers.push(getDemoIterations()); //initial buffer
+buffers.push([]); //initial buffer
 let producerBufferIndex = 0; //current buffer for producers
 let consumerBufferIndex = 0; //current buffer for consumers
 let consumerNext = 0; //current index in the consumer's current buffer
@@ -17,14 +17,12 @@ let consumerNext = 0; //current index in the consumer's current buffer
  *  multiple consumers are attempting to get messages they will steal from each other
  */
 class BrokerHandler {
-  initialize(initData, result) {
+  initialize(initData) {
     console.log('initialize');
 
     privateInitData = initData
-
-    result(null);
   }
-  publishIteration(itData, result) {
+  publishIteration(itData) {
     console.log('publish iteration');
 
     const currentBuffer = buffers[producerBufferIndex]
@@ -34,8 +32,6 @@ class BrokerHandler {
       buffers.push([]);
       producerBufferIndex++;
     }
-
-    result(null);
   }
 
   getInitData(result) {
