@@ -4,27 +4,113 @@ import Thrift from "./lib/thrift/thrift.js";
 import {NoDataException} from "./lib/thrift/gen-js/visualizer_types.js";
 import BrokerClient from "./lib/thrift/gen-js/Broker.js";
 
-const WINDOW_TIMEOUT = 250;
-let iterations = [];
-let nextIteration = 0;
+//Constants
+const WINDOW_TIMEOUT = 2000;
+const CHUNK_SIZE = 10; //consider making this configurable
+const MAX_BUFFER_SIZE = 5000; //soft maximum. If pollForUpdates requests a chunk size that will exceed this limit, no errors
 
+//State
+let visualizer;
+let buffer = [];
+let bufferOverflow = [];
+let expandedCells = [];
+let nextIterationToRender = 0;
+let initialized = false;
+
+//RPC objects
 const transport = new Thrift.TXHRTransport("/broker");
 const protocol  = new Thrift.TJSONProtocol(transport);
 const client    = new BrokerClient(protocol);
 
-const proxyHandler = () => console.log('Visualizer not instantiated yet');
-Window.visualizer = new Proxy({}, {
-  get: proxyHandler,
-  set: proxyHandler
-});
-client.getInitData((result) => {
-  if (result instanceof NoDataException) {
-    console.error('Data not initialized');
-    Window.visualizer = null;
-    return;
+/***********************************
+  Control Vars / Access Functions
+***********************************/
+//Offset
+let offset = 0; //not providing access function yet. Messing with offset must be handled gracefully
+
+//Polling
+let continuePolling = true;
+let timeoutId;
+export const stopPolling = () => {
+  continuePolling = false;
+  if (!!timeoutId) clearTimeout(timeoutId);
+}
+export const startPolling = () => {
+  if (!continuePolling) {
+    continuePolling = true;
+    poll();
+  }
+}
+
+//Animation Speed
+let animationSpeed = 0.2;
+export const getAnimationSpeed = () => animationSpeed;
+export const setAnimationSpeed = (newSpeed) => {
+  animationSpeed = newSpeed;
+
+  if (!initialized) return;
+
+  visualizer.ticker.animationSpeed = newSpeed;
+}
+
+/*************************
+  RPC / Animate Procedures
+*************************/
+/**
+ *  Do not call this function twice!!! (Race condition with your own request. Stupid...)
+ */
+export async function init() {
+  if (initialized) return;
+  const pingResult = await new Promise(resolve => {
+    client.ping(result => resolve(result));
+  });
+  console.log('Ping resolved with ' + pingResult);
+
+  continuePolling = true;
+  poll();
+}
+
+async function poll() {
+  timeoutId = null;
+  let flushed = false;
+
+  if (!initialized) {
+    initialized = await new Promise(resolve => {
+      client.getInitData(result => resolve(getInitDataCallback(result)))
+    });
+
+    flushed = true; //to prevent polling for iterations
   }
 
-  const visualizer = new Visualizer(result.width, result.height, document.getElementById('grid-container'));
+  while (!flushed && continuePolling && bufferOverflow.length <= MAX_BUFFER_SIZE) {
+    const result = await new Promise((resolve) => {
+      client.getIterations(offset, CHUNK_SIZE, (result) => {
+        resolve(result);
+      });
+    });
+
+    if (result instanceof NoDataException) {
+      break;
+    }
+
+    flushed = result.bufferIsFlushed;
+
+    const currentBuffer = buffer.length >= MAX_BUFFER_SIZE ? bufferOverflow : buffer;
+    currentBuffer = currentBuffer.concat(result.iterations);
+
+    offset += result.iterations.length;
+  }
+  
+  if (continuePolling) timeoutId = window.setTimeout(poll, WINDOW_TIMEOUT);
+}
+
+function getInitDataCallback(result) {
+  if (result instanceof NoDataException) {
+    console.log('Data not initialized');
+    return false;
+  }
+
+  visualizer = new Visualizer(result.width, result.height, document.getElementById('grid-container'));
 
   visualizer.setAgentLocation(result.start.x, result.start.y);
 
@@ -38,52 +124,27 @@ client.getInitData((result) => {
 
   visualizer.redraw();
 
-  window.visualizer = visualizer;
-
   //set up animation
-  visualizer.ticker.speed = 1.5;
+  visualizer.ticker.animationSpeed = animationSpeed;
   visualizer.ticker.add(getAnimationFunction(visualizer));
   visualizer.ticker.start();
-});
 
-//set up polling process
-function pollForUpdates() {
-  return new Promise(resolve => {
-    client.getIterations(result => {
-      resolve(result);
-    });
-  });
-}
+  //debug purposes
+  window.visualizer = visualizer;
 
-async function poll() {
-  let flushed = false;
+  return true;
+};
 
-  while (!flushed) {
-    const result = await pollForUpdates();
-
-    if (result instanceof NoDataException) {
-      break;
-    }
-
-    flushed = result.bufferIsFlushed;
-    iterations = iterations.concat(result.iterations);
-  }
-  
-  window.setTimeout(poll, WINDOW_TIMEOUT);
-}
-
-window.setTimeout(poll, WINDOW_TIMEOUT);
-
-//define ticker function
-let expandedCells = [];
+//ticker function
 function getAnimationFunction(visualizer) {
   return function animate() {
-    const it = iterations[nextIteration];
+    const it = buffer[nextIterationToRender];
     if (!it) return;
 
     if (it.clearPrevious) {
       for (let cell of expandedCells) {
         visualizer.setCell(cell.x, cell.y, visualizer.FREE);
+        expandedCells = [];
       }
     }
 
@@ -95,6 +156,13 @@ function getAnimationFunction(visualizer) {
     }
 
     visualizer.redraw();
-    nextIteration++;
+    nextIterationToRender++;
+
+    //reset buffer
+    if (buffer.length === nextIterationToRender) {
+      buffer = bufferOverflow;
+      bufferOverflow = [];
+      nextIterationToRender = 0;
+    }
   }
 }

@@ -17,6 +17,12 @@ let consumerNext = 0; //current index in the consumer's current buffer
  *  multiple consumers are attempting to get messages they will steal from each other
  */
 class BrokerHandler {
+  ping(result) {
+    console.log('ping');
+
+    result(null, 1);
+  }
+
   initialize(initData) {
     console.log('initialize');
 
@@ -38,6 +44,7 @@ class BrokerHandler {
     console.log('get init data');
 
     if (!privateInitData) {
+      console.log('privateInitData');
       result(new types.NoDataException());
       return;
     }
@@ -45,7 +52,7 @@ class BrokerHandler {
     result(null, privateInitData);
   }
 
-  getIterations(result) {
+  getIterations(offset, chunkSize, result) {
     console.log('get iterations');
 
     const iterationList = [];

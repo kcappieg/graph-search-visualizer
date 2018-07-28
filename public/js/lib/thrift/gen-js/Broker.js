@@ -4,10 +4,91 @@
 // DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 //
 
+import {Location, Iteration, IterationBundle, Init, NoDataException} from "./visualizer_types.js";
 import Thrift from "../thrift.js";
-import {Location, Iteration, IterationBundle, Init, NoDataException} from "./visualizer_types.js"
 
 //HELPER FUNCTIONS AND STRUCTURES
+
+const Broker_ping_args = function(args) {
+};
+Broker_ping_args.prototype = {};
+Broker_ping_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    input.skip(ftype);
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+Broker_ping_args.prototype.write = function(output) {
+  output.writeStructBegin('Broker_ping_args');
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+const Broker_ping_result = function(args) {
+  this.success = null;
+  if (args) {
+    if (args.success !== undefined && args.success !== null) {
+      this.success = args.success;
+    }
+  }
+};
+Broker_ping_result.prototype = {};
+Broker_ping_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.I32) {
+        this.success = input.readI32().value;
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+Broker_ping_result.prototype.write = function(output) {
+  output.writeStructBegin('Broker_ping_result');
+  if (this.success !== null && this.success !== undefined) {
+    output.writeFieldBegin('success', Thrift.Type.I32, 0);
+    output.writeI32(this.success);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
 
 const Broker_initialize_args = function(args) {
   this.initData = null;
@@ -278,6 +359,18 @@ Broker_getInitData_result.prototype.write = function(output) {
 };
 
 const Broker_getIterations_args = function(args) {
+  this.offset = null;
+  this.chunkSize = null;
+  if (args) {
+    if (args.offset !== undefined && args.offset !== null) {
+      this.offset = args.offset;
+    } else {
+      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field offset is unset!');
+    }
+    if (args.chunkSize !== undefined && args.chunkSize !== null) {
+      this.chunkSize = args.chunkSize;
+    }
+  }
 };
 Broker_getIterations_args.prototype = {};
 Broker_getIterations_args.prototype.read = function(input) {
@@ -291,7 +384,25 @@ Broker_getIterations_args.prototype.read = function(input) {
     if (ftype == Thrift.Type.STOP) {
       break;
     }
-    input.skip(ftype);
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.I32) {
+        this.offset = input.readI32().value;
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.I32) {
+        this.chunkSize = input.readI32().value;
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
     input.readFieldEnd();
   }
   input.readStructEnd();
@@ -300,6 +411,16 @@ Broker_getIterations_args.prototype.read = function(input) {
 
 Broker_getIterations_args.prototype.write = function(output) {
   output.writeStructBegin('Broker_getIterations_args');
+  if (this.offset !== null && this.offset !== undefined) {
+    output.writeFieldBegin('offset', Thrift.Type.I32, 1);
+    output.writeI32(this.offset);
+    output.writeFieldEnd();
+  }
+  if (this.chunkSize !== null && this.chunkSize !== undefined) {
+    output.writeFieldBegin('chunkSize', Thrift.Type.I32, 2);
+    output.writeI32(this.chunkSize);
+    output.writeFieldEnd();
+  }
   output.writeFieldStop();
   output.writeStructEnd();
   return;
@@ -383,6 +504,54 @@ const BrokerClient = function(input, output) {
     this.seqid = 0;
 };
 BrokerClient.prototype = {};
+BrokerClient.prototype.ping = function(callback) {
+  this.send_ping(callback); 
+  if (!callback) {
+    return this.recv_ping();
+  }
+};
+
+BrokerClient.prototype.send_ping = function(callback) {
+  this.output.writeMessageBegin('ping', Thrift.MessageType.CALL, this.seqid);
+  var args = new Broker_ping_args();
+  args.write(this.output);
+  this.output.writeMessageEnd();
+  if (callback) {
+    var self = this;
+    this.output.getTransport().flush(true, function() {
+      var result = null;
+      try {
+        result = self.recv_ping();
+      } catch (e) {
+        result = e;
+      }
+      callback(result);
+    });
+  } else {
+    return this.output.getTransport().flush();
+  }
+};
+
+BrokerClient.prototype.recv_ping = function() {
+  var ret = this.input.readMessageBegin();
+  var fname = ret.fname;
+  var mtype = ret.mtype;
+  var rseqid = ret.rseqid;
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(this.input);
+    this.input.readMessageEnd();
+    throw x;
+  }
+  var result = new Broker_ping_result();
+  result.read(this.input);
+  this.input.readMessageEnd();
+
+  if (null !== result.success) {
+    return result.success;
+  }
+  throw 'ping failed: unknown result';
+};
 BrokerClient.prototype.initialize = function(initData, callback) {
   this.send_initialize(initData, callback); 
 };
@@ -470,16 +639,20 @@ BrokerClient.prototype.recv_getInitData = function() {
   }
   throw 'getInitData failed: unknown result';
 };
-BrokerClient.prototype.getIterations = function(callback) {
-  this.send_getIterations(callback); 
+BrokerClient.prototype.getIterations = function(offset, chunkSize, callback) {
+  this.send_getIterations(offset, chunkSize, callback); 
   if (!callback) {
     return this.recv_getIterations();
   }
 };
 
-BrokerClient.prototype.send_getIterations = function(callback) {
+BrokerClient.prototype.send_getIterations = function(offset, chunkSize, callback) {
   this.output.writeMessageBegin('getIterations', Thrift.MessageType.CALL, this.seqid);
-  var args = new Broker_getIterations_args();
+  var params = {
+    offset: offset,
+    chunkSize: chunkSize
+  };
+  var args = new Broker_getIterations_args(params);
   args.write(this.output);
   this.output.writeMessageEnd();
   if (callback) {

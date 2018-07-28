@@ -13,6 +13,87 @@ var Q = thrift.Q;
 var ttypes = require('./visualizer_types');
 //HELPER FUNCTIONS AND STRUCTURES
 
+var Broker_ping_args = function(args) {
+};
+Broker_ping_args.prototype = {};
+Broker_ping_args.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    input.skip(ftype);
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+Broker_ping_args.prototype.write = function(output) {
+  output.writeStructBegin('Broker_ping_args');
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
+var Broker_ping_result = function(args) {
+  this.success = null;
+  if (args) {
+    if (args.success !== undefined && args.success !== null) {
+      this.success = args.success;
+    }
+  }
+};
+Broker_ping_result.prototype = {};
+Broker_ping_result.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 0:
+      if (ftype == Thrift.Type.I32) {
+        this.success = input.readI32();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 0:
+        input.skip(ftype);
+        break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+Broker_ping_result.prototype.write = function(output) {
+  output.writeStructBegin('Broker_ping_result');
+  if (this.success !== null && this.success !== undefined) {
+    output.writeFieldBegin('success', Thrift.Type.I32, 0);
+    output.writeI32(this.success);
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var Broker_initialize_args = function(args) {
   this.initData = null;
   if (args) {
@@ -282,6 +363,18 @@ Broker_getInitData_result.prototype.write = function(output) {
 };
 
 var Broker_getIterations_args = function(args) {
+  this.offset = null;
+  this.chunkSize = null;
+  if (args) {
+    if (args.offset !== undefined && args.offset !== null) {
+      this.offset = args.offset;
+    } else {
+      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field offset is unset!');
+    }
+    if (args.chunkSize !== undefined && args.chunkSize !== null) {
+      this.chunkSize = args.chunkSize;
+    }
+  }
 };
 Broker_getIterations_args.prototype = {};
 Broker_getIterations_args.prototype.read = function(input) {
@@ -295,7 +388,25 @@ Broker_getIterations_args.prototype.read = function(input) {
     if (ftype == Thrift.Type.STOP) {
       break;
     }
-    input.skip(ftype);
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.I32) {
+        this.offset = input.readI32();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.I32) {
+        this.chunkSize = input.readI32();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
     input.readFieldEnd();
   }
   input.readStructEnd();
@@ -304,6 +415,16 @@ Broker_getIterations_args.prototype.read = function(input) {
 
 Broker_getIterations_args.prototype.write = function(output) {
   output.writeStructBegin('Broker_getIterations_args');
+  if (this.offset !== null && this.offset !== undefined) {
+    output.writeFieldBegin('offset', Thrift.Type.I32, 1);
+    output.writeI32(this.offset);
+    output.writeFieldEnd();
+  }
+  if (this.chunkSize !== null && this.chunkSize !== undefined) {
+    output.writeFieldBegin('chunkSize', Thrift.Type.I32, 2);
+    output.writeI32(this.chunkSize);
+    output.writeFieldEnd();
+  }
   output.writeFieldStop();
   output.writeStructEnd();
   return;
@@ -390,6 +511,52 @@ var BrokerClient = exports.Client = function(output, pClass) {
 BrokerClient.prototype = {};
 BrokerClient.prototype.seqid = function() { return this._seqid; };
 BrokerClient.prototype.new_seqid = function() { return this._seqid += 1; };
+BrokerClient.prototype.ping = function(callback) {
+  this._seqid = this.new_seqid();
+  if (callback === undefined) {
+    var _defer = Q.defer();
+    this._reqs[this.seqid()] = function(error, result) {
+      if (error) {
+        _defer.reject(error);
+      } else {
+        _defer.resolve(result);
+      }
+    };
+    this.send_ping();
+    return _defer.promise;
+  } else {
+    this._reqs[this.seqid()] = callback;
+    this.send_ping();
+  }
+};
+
+BrokerClient.prototype.send_ping = function() {
+  var output = new this.pClass(this.output);
+  output.writeMessageBegin('ping', Thrift.MessageType.CALL, this.seqid());
+  var args = new Broker_ping_args();
+  args.write(output);
+  output.writeMessageEnd();
+  return this.output.flush();
+};
+
+BrokerClient.prototype.recv_ping = function(input,mtype,rseqid) {
+  var callback = this._reqs[rseqid] || function() {};
+  delete this._reqs[rseqid];
+  if (mtype == Thrift.MessageType.EXCEPTION) {
+    var x = new Thrift.TApplicationException();
+    x.read(input);
+    input.readMessageEnd();
+    return callback(x);
+  }
+  var result = new Broker_ping_result();
+  result.read(input);
+  input.readMessageEnd();
+
+  if (null !== result.success) {
+    return callback(null, result.success);
+  }
+  return callback('ping failed: unknown result');
+};
 BrokerClient.prototype.initialize = function(initData, callback) {
   this._seqid = this.new_seqid();
   if (callback === undefined) {
@@ -499,7 +666,7 @@ BrokerClient.prototype.recv_getInitData = function(input,mtype,rseqid) {
   }
   return callback('getInitData failed: unknown result');
 };
-BrokerClient.prototype.getIterations = function(callback) {
+BrokerClient.prototype.getIterations = function(offset, chunkSize, callback) {
   this._seqid = this.new_seqid();
   if (callback === undefined) {
     var _defer = Q.defer();
@@ -510,18 +677,22 @@ BrokerClient.prototype.getIterations = function(callback) {
         _defer.resolve(result);
       }
     };
-    this.send_getIterations();
+    this.send_getIterations(offset, chunkSize);
     return _defer.promise;
   } else {
     this._reqs[this.seqid()] = callback;
-    this.send_getIterations();
+    this.send_getIterations(offset, chunkSize);
   }
 };
 
-BrokerClient.prototype.send_getIterations = function() {
+BrokerClient.prototype.send_getIterations = function(offset, chunkSize) {
   var output = new this.pClass(this.output);
   output.writeMessageBegin('getIterations', Thrift.MessageType.CALL, this.seqid());
-  var args = new Broker_getIterations_args();
+  var params = {
+    offset: offset,
+    chunkSize: chunkSize
+  };
+  var args = new Broker_getIterations_args(params);
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
@@ -567,6 +738,42 @@ BrokerProcessor.prototype.process = function(input, output) {
   }
 }
 ;
+BrokerProcessor.prototype.process_ping = function(seqid, input, output) {
+  var args = new Broker_ping_args();
+  args.read(input);
+  input.readMessageEnd();
+  if (this._handler.ping.length === 0) {
+    Q.fcall(this._handler.ping.bind(this._handler))
+      .then(function(result) {
+        var result_obj = new Broker_ping_result({success: result});
+        output.writeMessageBegin("ping", Thrift.MessageType.REPLY, seqid);
+        result_obj.write(output);
+        output.writeMessageEnd();
+        output.flush();
+      }, function (err) {
+        var result;
+        result = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, err.message);
+        output.writeMessageBegin("ping", Thrift.MessageType.EXCEPTION, seqid);
+        result.write(output);
+        output.writeMessageEnd();
+        output.flush();
+      });
+  } else {
+    this._handler.ping(function (err, result) {
+      var result_obj;
+      if ((err === null || typeof err === 'undefined')) {
+        result_obj = new Broker_ping_result((err !== null || typeof err === 'undefined') ? err : {success: result});
+        output.writeMessageBegin("ping", Thrift.MessageType.REPLY, seqid);
+      } else {
+        result_obj = new Thrift.TApplicationException(Thrift.TApplicationExceptionType.UNKNOWN, err.message);
+        output.writeMessageBegin("ping", Thrift.MessageType.EXCEPTION, seqid);
+      }
+      result_obj.write(output);
+      output.writeMessageEnd();
+      output.flush();
+    });
+  }
+};
 BrokerProcessor.prototype.process_initialize = function(seqid, input, output) {
   var args = new Broker_initialize_args();
   args.read(input);
@@ -626,8 +833,8 @@ BrokerProcessor.prototype.process_getIterations = function(seqid, input, output)
   var args = new Broker_getIterations_args();
   args.read(input);
   input.readMessageEnd();
-  if (this._handler.getIterations.length === 0) {
-    Q.fcall(this._handler.getIterations.bind(this._handler))
+  if (this._handler.getIterations.length === 2) {
+    Q.fcall(this._handler.getIterations.bind(this._handler), args.offset, args.chunkSize)
       .then(function(result) {
         var result_obj = new Broker_getIterations_result({success: result});
         output.writeMessageBegin("getIterations", Thrift.MessageType.REPLY, seqid);
@@ -648,7 +855,7 @@ BrokerProcessor.prototype.process_getIterations = function(seqid, input, output)
         output.flush();
       });
   } else {
-    this._handler.getIterations(function (err, result) {
+    this._handler.getIterations(args.offset, args.chunkSize, function (err, result) {
       var result_obj;
       if ((err === null || typeof err === 'undefined') || err instanceof ttypes.NoDataException) {
         result_obj = new Broker_getIterations_result((err !== null || typeof err === 'undefined') ? err : {success: result});
