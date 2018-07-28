@@ -10,8 +10,11 @@
     <script src="./js/visualizer.js" type="module"></script>
     <script src="./js/main.js" type="module" async=true></script>
     <script type="module">
-      import {init} from "./js/main.js";
+      import {init, stopPolling, startPolling} from "./js/main.js";
       init();
+
+      window.startPolling = startPolling;
+      window.stopPolling = stopPolling;
     </script>
   </head>
   <body>

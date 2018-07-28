@@ -16,6 +16,7 @@ let bufferOverflow = [];
 let expandedCells = [];
 let nextIterationToRender = 0;
 let initialized = false;
+let deltaTime = 0;
 
 //RPC objects
 const transport = new Thrift.TXHRTransport("/broker");
@@ -43,14 +44,14 @@ export const startPolling = () => {
 }
 
 //Animation Speed
-let animationSpeed = 0.2;
+let animationSpeed = 1;
 export const getAnimationSpeed = () => animationSpeed;
 export const setAnimationSpeed = (newSpeed) => {
   animationSpeed = newSpeed;
 
   if (!initialized) return;
 
-  visualizer.ticker.animationSpeed = newSpeed;
+  visualizer.ticker.speed = newSpeed;
 }
 
 /*************************
@@ -95,8 +96,8 @@ async function poll() {
 
     flushed = result.bufferIsFlushed;
 
-    const currentBuffer = buffer.length >= MAX_BUFFER_SIZE ? bufferOverflow : buffer;
-    currentBuffer = currentBuffer.concat(result.iterations);
+    let currentBuffer = buffer.length >= MAX_BUFFER_SIZE ? bufferOverflow : buffer;
+    currentBuffer.push(...result.iterations);
 
     offset += result.iterations.length;
   }
@@ -125,7 +126,7 @@ function getInitDataCallback(result) {
   visualizer.redraw();
 
   //set up animation
-  visualizer.ticker.animationSpeed = animationSpeed;
+  visualizer.ticker.speed = animationSpeed;
   visualizer.ticker.add(getAnimationFunction(visualizer));
   visualizer.ticker.start();
 
@@ -138,31 +139,42 @@ function getInitDataCallback(result) {
 //ticker function
 function getAnimationFunction(visualizer) {
   return function animate() {
-    const it = buffer[nextIterationToRender];
+    let it = buffer[nextIterationToRender];
     if (!it) return;
 
-    if (it.clearPrevious) {
-      for (let cell of expandedCells) {
-        visualizer.setCell(cell.x, cell.y, visualizer.FREE);
-        expandedCells = [];
+    deltaTime += visualizer.ticker.deltaTime;
+    const numIterationsToRender = Math.floor(deltaTime);
+    deltaTime -= numIterationsToRender;
+
+    for (let i = 0; i < numIterationsToRender; i++) {
+      if (!it) break;
+
+      if (it.clearPrevious) {
+        for (let cell of expandedCells) {
+          visualizer.setCell(cell.x, cell.y, visualizer.FREE);
+          expandedCells = [];
+        }
       }
-    }
 
-    visualizer.setAgentLocation(it.agentLocation.x, it.agentLocation.y);
+      visualizer.setAgentLocation(it.agentLocation.x, it.agentLocation.y);
 
-    for (let cell of it.newEnvelopeNodesCells) {
-      visualizer.setCell(cell.x, cell.y, visualizer.EXPANDED);
-      expandedCells.push(cell);
+      for (let cell of it.newEnvelopeNodesCells) {
+        visualizer.setCell(cell.x, cell.y, visualizer.EXPANDED);
+        expandedCells.push(cell);
+      }
+      
+      nextIterationToRender++;
+
+      //reset buffer
+      if (buffer.length === nextIterationToRender) {
+        buffer = bufferOverflow;
+        bufferOverflow = [];
+        nextIterationToRender = 0;
+      }
+
+      it = buffer[nextIterationToRender];
     }
 
     visualizer.redraw();
-    nextIterationToRender++;
-
-    //reset buffer
-    if (buffer.length === nextIterationToRender) {
-      buffer = bufferOverflow;
-      bufferOverflow = [];
-      nextIterationToRender = 0;
-    }
   }
 }

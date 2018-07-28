@@ -4,12 +4,12 @@ const types = require('./gen-nodejs/visualizer_types.js');
 const ITERATION_CHUNK_SIZE = 10; //10 iterations at a time
 const MAX_BUFFER_SIZE = 1000;
 
-let privateInitData = null;
+let privateInitData = getDemoInit(); //null;
 const buffers = [];
-buffers.push([]); //initial buffer
+buffers.push(getDemoIterations()/*[]*/); //initial buffer
 let producerBufferIndex = 0; //current buffer for producers
-let consumerBufferIndex = 0; //current buffer for consumers
-let consumerNext = 0; //current index in the consumer's current buffer
+// let consumerBufferIndex = 0; //current buffer for consumers
+// let consumerNext = 0; //current index in the consumer's current buffer
 
 /**
  *  This class is designed for a single producer / consumer.
@@ -53,29 +53,31 @@ class BrokerHandler {
   }
 
   getIterations(offset, chunkSize, result) {
-    console.log('get iterations');
+    console.log(`get iterations; offset: ${offset}, chunk size: ${chunkSize}`);
+
+    let {buffer: bufferIndex, index: next} = getIndicesFromOffset(offset);
 
     const iterationList = [];
-    let buffer = buffers[consumerBufferIndex] || [];
+    let buffer = buffers[bufferIndex] || [];
 
-    if (!buffer[consumerNext]) {
+    if (!buffer[next]) {
       result(new types.NoDataException());
       return;
     }
 
-    for (let i = 0; i < ITERATION_CHUNK_SIZE; i++) {
-      if (!buffer[consumerNext]) break;
+    for (let i = 0; i < chunkSize; i++) {
+      if (!buffer[next]) break;
 
-      iterationList.push(buffer[consumerNext++]);
+      iterationList.push(buffer[next++]);
 
-      if (consumerNext >= MAX_BUFFER_SIZE) {
+      if (next >= MAX_BUFFER_SIZE) {
         //default to empty array in case the producer has not created the next buffer yet
-        buffer = buffers[++consumerBufferIndex] || [];
-        consumerNext = 0;
+        buffer = buffers[++bufferIndex] || [];
+        next = 0;
       }
     }
 
-    const bufferIsFlushed = !buffer[consumerNext];
+    const bufferIsFlushed = !buffer[next];
 
     result(null, new types.IterationBundle({
       iterations: iterationList,
@@ -83,6 +85,13 @@ class BrokerHandler {
     }));
   }
 };
+
+function getIndicesFromOffset(offset) {
+  return {
+    buffer: Math.floor(offset / MAX_BUFFER_SIZE),
+    index: offset % MAX_BUFFER_SIZE
+  };
+}
 
 module.exports = new BrokerHandler();
 
