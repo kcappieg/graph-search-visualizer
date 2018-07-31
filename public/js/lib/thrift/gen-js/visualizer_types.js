@@ -77,25 +77,33 @@ Location.prototype.write = function(output) {
 };
 
 const Iteration = function(args) {
-  this.clearPrevious = null;
   this.agentLocation = null;
+  this.clearPreviousEnvelope = null;
   this.newEnvelopeNodesCells = null;
+  this.clearPreviousBackup = null;
+  this.newBackedUpCells = null;
   this.projectedPath = null;
   if (args) {
-    if (args.clearPrevious !== undefined && args.clearPrevious !== null) {
-      this.clearPrevious = args.clearPrevious;
-    } else {
-      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field clearPrevious is unset!');
-    }
     if (args.agentLocation !== undefined && args.agentLocation !== null) {
       this.agentLocation = new Location(args.agentLocation);
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field agentLocation is unset!');
     }
+    if (args.clearPreviousEnvelope !== undefined && args.clearPreviousEnvelope !== null) {
+      this.clearPreviousEnvelope = args.clearPreviousEnvelope;
+    } else {
+      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field clearPreviousEnvelope is unset!');
+    }
     if (args.newEnvelopeNodesCells !== undefined && args.newEnvelopeNodesCells !== null) {
       this.newEnvelopeNodesCells = Thrift.copyList(args.newEnvelopeNodesCells, [Location]);
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field newEnvelopeNodesCells is unset!');
+    }
+    if (args.clearPreviousBackup !== undefined && args.clearPreviousBackup !== null) {
+      this.clearPreviousBackup = args.clearPreviousBackup;
+    }
+    if (args.newBackedUpCells !== undefined && args.newBackedUpCells !== null) {
+      this.newBackedUpCells = Thrift.copyList(args.newBackedUpCells, [Location]);
     }
     if (args.projectedPath !== undefined && args.projectedPath !== null) {
       this.projectedPath = Thrift.copyList(args.projectedPath, [Location]);
@@ -117,16 +125,16 @@ Iteration.prototype.read = function(input) {
     switch (fid)
     {
       case 1:
-      if (ftype == Thrift.Type.BOOL) {
-        this.clearPrevious = input.readBool().value;
+      if (ftype == Thrift.Type.STRUCT) {
+        this.agentLocation = new Location();
+        this.agentLocation.read(input);
       } else {
         input.skip(ftype);
       }
       break;
       case 2:
-      if (ftype == Thrift.Type.STRUCT) {
-        this.agentLocation = new Location();
-        this.agentLocation.read(input);
+      if (ftype == Thrift.Type.BOOL) {
+        this.clearPreviousEnvelope = input.readBool().value;
       } else {
         input.skip(ftype);
       }
@@ -153,10 +161,17 @@ Iteration.prototype.read = function(input) {
       }
       break;
       case 4:
+      if (ftype == Thrift.Type.BOOL) {
+        this.clearPreviousBackup = input.readBool().value;
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 5:
       if (ftype == Thrift.Type.SET) {
         var _size7 = 0;
         var _rtmp311;
-        this.projectedPath = [];
+        this.newBackedUpCells = [];
         var _etype10 = 0;
         _rtmp311 = input.readSetBegin();
         _etype10 = _rtmp311.etype;
@@ -166,7 +181,28 @@ Iteration.prototype.read = function(input) {
           var elem13 = null;
           elem13 = new Location();
           elem13.read(input);
-          this.projectedPath.push(elem13);
+          this.newBackedUpCells.push(elem13);
+        }
+        input.readSetEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 6:
+      if (ftype == Thrift.Type.SET) {
+        var _size14 = 0;
+        var _rtmp318;
+        this.projectedPath = [];
+        var _etype17 = 0;
+        _rtmp318 = input.readSetBegin();
+        _etype17 = _rtmp318.etype;
+        _size14 = _rtmp318.size;
+        for (var _i19 = 0; _i19 < _size14; ++_i19)
+        {
+          var elem20 = null;
+          elem20 = new Location();
+          elem20.read(input);
+          this.projectedPath.push(elem20);
         }
         input.readSetEnd();
       } else {
@@ -184,39 +220,58 @@ Iteration.prototype.read = function(input) {
 
 Iteration.prototype.write = function(output) {
   output.writeStructBegin('Iteration');
-  if (this.clearPrevious !== null && this.clearPrevious !== undefined) {
-    output.writeFieldBegin('clearPrevious', Thrift.Type.BOOL, 1);
-    output.writeBool(this.clearPrevious);
+  if (this.agentLocation !== null && this.agentLocation !== undefined) {
+    output.writeFieldBegin('agentLocation', Thrift.Type.STRUCT, 1);
+    this.agentLocation.write(output);
     output.writeFieldEnd();
   }
-  if (this.agentLocation !== null && this.agentLocation !== undefined) {
-    output.writeFieldBegin('agentLocation', Thrift.Type.STRUCT, 2);
-    this.agentLocation.write(output);
+  if (this.clearPreviousEnvelope !== null && this.clearPreviousEnvelope !== undefined) {
+    output.writeFieldBegin('clearPreviousEnvelope', Thrift.Type.BOOL, 2);
+    output.writeBool(this.clearPreviousEnvelope);
     output.writeFieldEnd();
   }
   if (this.newEnvelopeNodesCells !== null && this.newEnvelopeNodesCells !== undefined) {
     output.writeFieldBegin('newEnvelopeNodesCells', Thrift.Type.SET, 3);
     output.writeSetBegin(Thrift.Type.STRUCT, this.newEnvelopeNodesCells.length);
-    for (var iter14 in this.newEnvelopeNodesCells)
+    for (var iter21 in this.newEnvelopeNodesCells)
     {
-      if (this.newEnvelopeNodesCells.hasOwnProperty(iter14))
+      if (this.newEnvelopeNodesCells.hasOwnProperty(iter21))
       {
-        iter14 = this.newEnvelopeNodesCells[iter14];
-        iter14.write(output);
+        iter21 = this.newEnvelopeNodesCells[iter21];
+        iter21.write(output);
+      }
+    }
+    output.writeSetEnd();
+    output.writeFieldEnd();
+  }
+  if (this.clearPreviousBackup !== null && this.clearPreviousBackup !== undefined) {
+    output.writeFieldBegin('clearPreviousBackup', Thrift.Type.BOOL, 4);
+    output.writeBool(this.clearPreviousBackup);
+    output.writeFieldEnd();
+  }
+  if (this.newBackedUpCells !== null && this.newBackedUpCells !== undefined) {
+    output.writeFieldBegin('newBackedUpCells', Thrift.Type.SET, 5);
+    output.writeSetBegin(Thrift.Type.STRUCT, this.newBackedUpCells.length);
+    for (var iter22 in this.newBackedUpCells)
+    {
+      if (this.newBackedUpCells.hasOwnProperty(iter22))
+      {
+        iter22 = this.newBackedUpCells[iter22];
+        iter22.write(output);
       }
     }
     output.writeSetEnd();
     output.writeFieldEnd();
   }
   if (this.projectedPath !== null && this.projectedPath !== undefined) {
-    output.writeFieldBegin('projectedPath', Thrift.Type.SET, 4);
+    output.writeFieldBegin('projectedPath', Thrift.Type.SET, 6);
     output.writeSetBegin(Thrift.Type.STRUCT, this.projectedPath.length);
-    for (var iter15 in this.projectedPath)
+    for (var iter23 in this.projectedPath)
     {
-      if (this.projectedPath.hasOwnProperty(iter15))
+      if (this.projectedPath.hasOwnProperty(iter23))
       {
-        iter15 = this.projectedPath[iter15];
-        iter15.write(output);
+        iter23 = this.projectedPath[iter23];
+        iter23.write(output);
       }
     }
     output.writeSetEnd();
@@ -259,19 +314,19 @@ IterationBundle.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size16 = 0;
-        var _rtmp320;
+        var _size24 = 0;
+        var _rtmp328;
         this.iterations = [];
-        var _etype19 = 0;
-        _rtmp320 = input.readListBegin();
-        _etype19 = _rtmp320.etype;
-        _size16 = _rtmp320.size;
-        for (var _i21 = 0; _i21 < _size16; ++_i21)
+        var _etype27 = 0;
+        _rtmp328 = input.readListBegin();
+        _etype27 = _rtmp328.etype;
+        _size24 = _rtmp328.size;
+        for (var _i29 = 0; _i29 < _size24; ++_i29)
         {
-          var elem22 = null;
-          elem22 = new Iteration();
-          elem22.read(input);
-          this.iterations.push(elem22);
+          var elem30 = null;
+          elem30 = new Iteration();
+          elem30.read(input);
+          this.iterations.push(elem30);
         }
         input.readListEnd();
       } else {
@@ -299,12 +354,12 @@ IterationBundle.prototype.write = function(output) {
   if (this.iterations !== null && this.iterations !== undefined) {
     output.writeFieldBegin('iterations', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.STRUCT, this.iterations.length);
-    for (var iter23 in this.iterations)
+    for (var iter31 in this.iterations)
     {
-      if (this.iterations.hasOwnProperty(iter23))
+      if (this.iterations.hasOwnProperty(iter31))
       {
-        iter23 = this.iterations[iter23];
-        iter23.write(output);
+        iter31 = this.iterations[iter31];
+        iter31.write(output);
       }
     }
     output.writeListEnd();
@@ -392,19 +447,19 @@ Init.prototype.read = function(input) {
       break;
       case 4:
       if (ftype == Thrift.Type.LIST) {
-        var _size24 = 0;
-        var _rtmp328;
+        var _size32 = 0;
+        var _rtmp336;
         this.goals = [];
-        var _etype27 = 0;
-        _rtmp328 = input.readListBegin();
-        _etype27 = _rtmp328.etype;
-        _size24 = _rtmp328.size;
-        for (var _i29 = 0; _i29 < _size24; ++_i29)
+        var _etype35 = 0;
+        _rtmp336 = input.readListBegin();
+        _etype35 = _rtmp336.etype;
+        _size32 = _rtmp336.size;
+        for (var _i37 = 0; _i37 < _size32; ++_i37)
         {
-          var elem30 = null;
-          elem30 = new Location();
-          elem30.read(input);
-          this.goals.push(elem30);
+          var elem38 = null;
+          elem38 = new Location();
+          elem38.read(input);
+          this.goals.push(elem38);
         }
         input.readListEnd();
       } else {
@@ -413,19 +468,19 @@ Init.prototype.read = function(input) {
       break;
       case 5:
       if (ftype == Thrift.Type.SET) {
-        var _size31 = 0;
-        var _rtmp335;
+        var _size39 = 0;
+        var _rtmp343;
         this.blockedCells = [];
-        var _etype34 = 0;
-        _rtmp335 = input.readSetBegin();
-        _etype34 = _rtmp335.etype;
-        _size31 = _rtmp335.size;
-        for (var _i36 = 0; _i36 < _size31; ++_i36)
+        var _etype42 = 0;
+        _rtmp343 = input.readSetBegin();
+        _etype42 = _rtmp343.etype;
+        _size39 = _rtmp343.size;
+        for (var _i44 = 0; _i44 < _size39; ++_i44)
         {
-          var elem37 = null;
-          elem37 = new Location();
-          elem37.read(input);
-          this.blockedCells.push(elem37);
+          var elem45 = null;
+          elem45 = new Location();
+          elem45.read(input);
+          this.blockedCells.push(elem45);
         }
         input.readSetEnd();
       } else {
@@ -461,12 +516,12 @@ Init.prototype.write = function(output) {
   if (this.goals !== null && this.goals !== undefined) {
     output.writeFieldBegin('goals', Thrift.Type.LIST, 4);
     output.writeListBegin(Thrift.Type.STRUCT, this.goals.length);
-    for (var iter38 in this.goals)
+    for (var iter46 in this.goals)
     {
-      if (this.goals.hasOwnProperty(iter38))
+      if (this.goals.hasOwnProperty(iter46))
       {
-        iter38 = this.goals[iter38];
-        iter38.write(output);
+        iter46 = this.goals[iter46];
+        iter46.write(output);
       }
     }
     output.writeListEnd();
@@ -475,12 +530,12 @@ Init.prototype.write = function(output) {
   if (this.blockedCells !== null && this.blockedCells !== undefined) {
     output.writeFieldBegin('blockedCells', Thrift.Type.SET, 5);
     output.writeSetBegin(Thrift.Type.STRUCT, this.blockedCells.length);
-    for (var iter39 in this.blockedCells)
+    for (var iter47 in this.blockedCells)
     {
-      if (this.blockedCells.hasOwnProperty(iter39))
+      if (this.blockedCells.hasOwnProperty(iter47))
       {
-        iter39 = this.blockedCells[iter39];
-        iter39.write(output);
+        iter47 = this.blockedCells[iter47];
+        iter47.write(output);
       }
     }
     output.writeSetEnd();

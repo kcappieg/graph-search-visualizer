@@ -1,4 +1,4 @@
-namespace java org.apache.thrift.visualizer
+namespace java edu.unh.cs.ai.realtimesearch.visualizer.thrift
 
 struct Location {
   1: required i32 x,
@@ -6,10 +6,12 @@ struct Location {
 }
 
 struct Iteration {
-  1: required bool clearPrevious,
-  2: required Location agentLocation,
+  1: required Location agentLocation,
+  2: required bool clearPreviousEnvelope,
   3: required set<Location> newEnvelopeNodesCells,
-  4: optional set<Location> projectedPath
+  4: optional bool clearPreviousBackup,
+  5: optional set<Location> newBackedUpCells,
+  6: optional set<Location> projectedPath
 }
 
 struct IterationBundle {

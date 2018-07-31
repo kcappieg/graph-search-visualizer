@@ -3,6 +3,13 @@
   <head>
     <meta charset="utf-8" />
     <title>Graph Search Visualizer</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" type="text/css" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="./css/bootstrap-grid.min.css">
+    <link rel="stylesheet" type="text/css" href="./css/bootstrap-reboot.min.css">
+
+    <!-- JS -->
     <script src="./js/lib/pixi.js" type="module"></script>
     <script src="./js/lib/thrift/thrift.js" type="module"></script>
     <script src="./js/lib/thrift/gen-js/Broker.js" type="module"></script>
@@ -10,15 +17,45 @@
     <script src="./js/visualizer.js" type="module"></script>
     <script src="./js/main.js" type="module" async=true></script>
     <script type="module">
-      import {init, stopPolling, startPolling} from "./js/main.js";
-      init();
+      import {init, stopPolling, startPolling, setAnimationSpeed, getAnimationSpeed} from "./js/main.js";
+      window.init = init;
 
       window.startPolling = startPolling;
       window.stopPolling = stopPolling;
+      window.setAnimationSpeed = () => {
+        const newSpeed = parseFloat(document.getElementById('animationSpeedControl').value);
+        setAnimationSpeed(newSpeed);
+      }
+
+      document.getElementById('animationSpeedControl').value = getAnimationSpeed();
     </script>
   </head>
   <body>
-    <h1>Visualizer for Graph Search Algorithms</h1>
-    <div id="grid-container" style="border: 1px solid gray; height: 1000px; width:1000px"></div>
+    <div clas="container-fluid">
+      <div class="row">
+        <h1 class="col-12 text-center">Visualizer for Graph Search Algorithms</h1>
+      </div>
+      <div class="row no-gutters">
+        <div class="col-12 col-md-8 col-lg-10" id="grid-container" style="border: 1px solid gray; min-height: 800px"></div>
+        <div class="col-12 col-md-4 col-lg-2 p-1 container-fluid p-2" id="controls">
+          <div class="row no-gutters pb-3">
+            <div class="col border-bottom pb-1">
+              <button type="button" class="btn btn-primary" onclick="init()">Start</button>
+            </div>
+          </div>
+          <div class="row no-gutters border-bottom pb-3 d-table">
+            <div class="pr-1 d-table-row">
+              <div class="col-6 form-group d-table-cell">
+                <label for="animationSpeedControl">Animation Speed</label>
+                <input class="form-control" type="number" id="animationSpeedControl" />
+              </div>
+              <div class="col-6 d-table-cell align-middle">
+                <button class="btn btn-primary" onclick="setAnimationSpeed()">Set Speed</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

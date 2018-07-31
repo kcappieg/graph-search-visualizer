@@ -4,8 +4,8 @@
 // DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 //
 
-import {Location, Iteration, IterationBundle, Init, NoDataException} from "./visualizer_types.js";
 import Thrift from "../thrift.js";
+import {Location, Iteration, IterationBundle, Init, NoDataException} from "./visualizer_types.js";
 
 //HELPER FUNCTIONS AND STRUCTURES
 

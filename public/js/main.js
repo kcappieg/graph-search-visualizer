@@ -13,10 +13,29 @@ const MAX_BUFFER_SIZE = 5000; //soft maximum. If pollForUpdates requests a chunk
 let visualizer;
 let buffer = [];
 let bufferOverflow = [];
-let expandedCells = [];
 let nextIterationToRender = 0;
 let initialized = false;
 let deltaTime = 0;
+
+//for tracking visualization
+let expandedCells = [];
+let backedUpCells = [];
+let projection = [];
+
+//will be indexed by x,y
+const cellIndexBacking = {};
+const cellIndex = new Proxy(cellIndexBacking, {
+  get: function(backing, prop) {
+    if (prop == 'backing') return backing;
+
+    let numProp = parseInt(prop, 10);
+    if (numProp !== numProp) return undefined;
+
+    if (!backing[numProp]) backing[numProp] = {};
+    return backing[numProp];
+  },
+  set: function(){/*noop*/}
+})
 
 //RPC objects
 const transport = new Thrift.TXHRTransport("/broker");
@@ -149,19 +168,50 @@ function getAnimationFunction(visualizer) {
     for (let i = 0; i < numIterationsToRender; i++) {
       if (!it) break;
 
-      if (it.clearPrevious) {
+      //ENVELOPE
+      if (it.clearPreviousEnvelope) {
         for (let cell of expandedCells) {
-          visualizer.setCell(cell.x, cell.y, visualizer.FREE);
-          expandedCells = [];
+          cell.clearState('EXPANDED');
+          visualizer.setCell(cell.x, cell.y, visualizer[cell.state]);
+        }
+        expandedCells = [];
+      }
+
+      for (let iterationCell of it.newEnvelopeNodesCells) {
+        updateCellState(iterationCell, 'EXPANDED', expandedCells, visualizer);
+      }
+
+      //BACKUP
+      if (it.clearPreviousBackup) {
+        for (let cell of backedUpCells) {
+          cell.clearState('BACKED_UP');
+          visualizer.setCell(cell.x, cell.y, visualizer[cell.state]);
+        }
+        backedUpCells = [];
+      }
+
+      if (!!it.newBackedUpCells) {
+        for (let iterationCell of it.newBackedUpCells) {
+          updateCellState(iterationCell, 'BACKED_UP', backedUpCells, visualizer);
+        }
+      }
+
+      //AGENT
+      if (!!it.projectedPath) {
+        //clear previous path
+        for (let cell of projection) {
+          cell.clearState('PATH_PROJECTION');
+          visualizer.setCell(cell.x, cell.y, visualizer[cell.state]);
+        }
+        projection = [];
+
+        //draw new path
+        for (let iterationCell of it.projectedPath) {
+          updateCellState(iterationCell, 'PATH_PROJECTION', projection, visualizer);
         }
       }
 
       visualizer.setAgentLocation(it.agentLocation.x, it.agentLocation.y);
-
-      for (let cell of it.newEnvelopeNodesCells) {
-        visualizer.setCell(cell.x, cell.y, visualizer.EXPANDED);
-        expandedCells.push(cell);
-      }
       
       nextIterationToRender++;
 
@@ -176,5 +226,50 @@ function getAnimationFunction(visualizer) {
     }
 
     visualizer.redraw();
+  }
+}
+
+function updateCellState(iterationCell, newState, storageArray, visualizer) {
+  let x = iterationCell.x;
+  let y = iterationCell.y;
+  let cell = cellIndex[x][y];
+
+  if (!cell) {
+    cell = new Cell(x, y);
+
+    cellIndex[x][y] = cell;
+  }
+  cell.state = newState;
+
+  visualizer.setCell(cell.x, cell.y, visualizer[cell.state]);
+  storageArray.push(cell);
+}
+
+class Cell {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+
+    this._stateFlags = {
+      FREE: true,
+      EXPANDED: false,
+      BACKED_UP: false,
+      PATH_PROJECTION: false
+    };
+  }
+
+  get state() { //method defines precedence
+    if (this._stateFlags.PATH_PROJECTION) return 'PATH_PROJECTION';
+    else if (this._stateFlags.BACKED_UP) return 'BACKED_UP';
+    else if (this._stateFlags.EXPANDED) return 'EXPANDED';
+    else return 'FREE';
+  }
+
+  set state(stateName) {
+    this._stateFlags[stateName] = true;
+  }
+
+  clearState(stateName) {
+    this._stateFlags[stateName] = false;
   }
 }

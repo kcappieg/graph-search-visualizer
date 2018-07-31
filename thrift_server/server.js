@@ -27,6 +27,17 @@ module.exports = function createServer(webPort) {
   const server = thrift.createServer(BrokerSvc, brokerHandler);
   server.listen(BINARY_PROTOCOL_PORT);
 
+  server.on('error', (err) => {
+    switch (err.code) {
+      case 'ECONNRESET':
+        console.error('Connection reset error: client likely forgot to close the connection');
+        break;
+      default:
+        console.error(`Uncaught exception: ${err.code} - ${err.message}`);
+        throw err;
+    }
+  });
+
   console.log(`HTTP Thrift Server listening on port ${webPort}`);
   console.log(`Binary protocol Thrift Server listening on port ${BINARY_PROTOCOL_PORT}`);
 

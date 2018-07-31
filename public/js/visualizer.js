@@ -208,6 +208,12 @@ Object.defineProperty(Visualizer.prototype, 'EXPANDED', {
   enumerable: true,
   configurable: false
 });
+Object.defineProperty(Visualizer.prototype, 'BACKED_UP', {
+  value: 0xe0c6f7,
+  writeable: false,
+  enumerable: true,
+  configurable: false
+});
 Object.defineProperty(Visualizer.prototype, 'GOAL', {
   value: 0x00FF00,
   writeable: false,

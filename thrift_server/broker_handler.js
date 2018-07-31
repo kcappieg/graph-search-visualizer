@@ -4,9 +4,8 @@ const types = require('./gen-nodejs/visualizer_types.js');
 const ITERATION_CHUNK_SIZE = 10; //10 iterations at a time
 const MAX_BUFFER_SIZE = 1000;
 
-let privateInitData = getDemoInit(); //null;
-const buffers = [];
-buffers.push(getDemoIterations()/*[]*/); //initial buffer
+let privateInitData = null;
+let buffers; //buffer list with one initial buffer
 let producerBufferIndex = 0; //current buffer for producers
 // let consumerBufferIndex = 0; //current buffer for consumers
 // let consumerNext = 0; //current index in the consumer's current buffer
@@ -26,13 +25,15 @@ class BrokerHandler {
   initialize(initData) {
     console.log('initialize');
 
-    privateInitData = initData
+    privateInitData = initData;
+    buffers = [[]];
   }
   publishIteration(itData) {
     console.log('publish iteration');
 
     const currentBuffer = buffers[producerBufferIndex]
     currentBuffer.push(itData);
+    console.log(itData.clearPreviousBackup);
 
     if (currentBuffer.length >= MAX_BUFFER_SIZE) {
       buffers.push([]);
@@ -44,7 +45,6 @@ class BrokerHandler {
     console.log('get init data');
 
     if (!privateInitData) {
-      console.log('privateInitData');
       result(new types.NoDataException());
       return;
     }

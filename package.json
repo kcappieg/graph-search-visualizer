@@ -5,8 +5,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start-win": "set MODE=PRODUCTION && node index.js",
-    "dev-win": "set MODE=DEVELOPMENT && node index.js"
+    "start-win": "set \"NODE_ENV=PRODUCTION\" && node index.js",
+    "dev-win": "set \"NODE_ENV=DEVELOPMENT\" && node index.js",
+    "start": "NODE_ENV=PRODUCTION && node index.js",
+    "dev": "NODE_ENV=DEVELOPMENT && node index.js"
   },
   "author": "Kevin C. Gall",
   "license": "ISC",
