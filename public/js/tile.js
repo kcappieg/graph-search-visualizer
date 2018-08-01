@@ -21,7 +21,7 @@ export class Tile {
     this._graphic.on('pointermove', evt => {
       const pos = evt.data.getLocalPosition(evt.currentTarget);
 
-      pointerMoveCallback(pos.x, pos.y);
+      pointerMoveCallback(Math.floor(pos.x / CELL_SIDE_LENGTH), Math.floor(pos.y / CELL_SIDE_LENGTH));
     });
 
     /**

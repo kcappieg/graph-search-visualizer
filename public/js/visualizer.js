@@ -54,7 +54,7 @@ export class Visualizer {
     const container = this._gridContainer = new PIXI.Container();
     this._app.stage.addChild(container);
 
-    this._requestCellInfo = ()=>{}; //no-op
+    this._requestCellInfo = ()=>{return {};}; //return empty object
 
     const totalCells = width * height;
     const tileRatio = totalCells / MAX_TILES;
@@ -84,6 +84,15 @@ export class Visualizer {
             newTile.addCell(this.FREE);
           }
         }
+
+        //adding pointermove handler for tile which will translate the cell coordinate info
+        //and request info on that cell from invoking code
+        newTile.setPointerCallback((tileX, tileY) => {
+          const realX = (this._tileSize * x) + tileX;
+          const realY = (this._tileSize * y) + tileY;
+
+          const info = this._requestCellInfo(realX, realY);
+        });
 
         const tileGraphic = newTile.draw().getGraphic();
         tileGraphic.position = new PIXI.Point(x * CELL_SIDE_LENGTH * this._tileSize, y * CELL_SIDE_LENGTH * this._tileSize);

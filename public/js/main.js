@@ -148,6 +148,11 @@ function getInitDataCallback(result) {
     visualizer.setCell(cell.x, cell.y, visualizer.BLOCKED);
   }
 
+  visualizer.setCellRequestFunction((x, y) => {
+    console.log(`x: ${x}, y: ${y}`);
+    return {};
+  });
+
   visualizer.redraw();
 
   //set up animation
