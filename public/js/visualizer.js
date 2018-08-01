@@ -50,11 +50,18 @@ export class Visualizer {
     });
     //for pointermove tile events
     this._app.renderer.plugins.interaction.moveWhenInside = true;
+    this._app.stage.interactive = true;
 
     const container = this._gridContainer = new PIXI.Container();
     this._app.stage.addChild(container);
 
     this._requestCellInfo = ()=>{return {};}; //return empty object
+    this._infoPopup = new CellInfo();
+    this._popupTile = null;
+    this._app.stage.on('pointerout', (evt) => {
+      this._app.stage.removeChild(this._infoPopup.textBox);
+      this._popupTile = null;
+    });
 
     const totalCells = width * height;
     const tileRatio = totalCells / MAX_TILES;
@@ -87,11 +94,43 @@ export class Visualizer {
 
         //adding pointermove handler for tile which will translate the cell coordinate info
         //and request info on that cell from invoking code
-        newTile.setPointerCallback((tileX, tileY) => {
-          const realX = (this._tileSize * x) + tileX;
-          const realY = (this._tileSize * y) + tileY;
+        newTile.setPointerCallback((tile, evt, tileInternalX, tileInternalY) => {
+          const realX = (this._tileSize * x) + tileInternalX;
+          const realY = (this._tileSize * y) + tileInternalY;
 
           const info = this._requestCellInfo(realX, realY);
+          this._infoPopup.setText(realX, realY, info);
+
+          if (this._popupTile === null) this._app.stage.addChild(this._infoPopup.textBox);
+          if (this._popupTile !== tile) {
+            this._popupTile = tile;
+          }
+
+          const popupLoc = evt.data.getLocalPosition(this._app.stage);
+
+          //standard behavior: the pointer is bottom center of the info box
+          let newX = popupLoc.x - (this._infoPopup.textBox.width / 2);
+          let newY = popupLoc.y - this._infoPopup.textBox.height;
+
+          //modify info box position for different scenarios
+          //hard coding new values...? Seems easiest, and effective enough...
+          //buffer of 20 to avoid colliding with pointer icon
+          const maxY = (this._app.stage.height - this._infoPopup.textBox.height);
+          if (newY < 0) {
+            newY = 20;
+          } else if (newY > maxY) {
+            newY = maxY - 20;
+          }
+
+          const maxX = (this._app.stage.width - this._infoPopup.textBox.width);
+          if (newX < 0) {
+            newX = 20;
+          } else if (newX > maxX) {
+            newX = maxX - 20;
+          }
+          
+          popupLoc.set(newX, newY);
+          this._infoPopup.textBox.position = popupLoc;
         });
 
         const tileGraphic = newTile.draw().getGraphic();
@@ -252,28 +291,42 @@ Object.defineProperty(Visualizer.prototype, 'PATH_PROJECTION', {
   configurable: false
 });
 
+
 export class CellInfo {
-  constructor (x, y, info={}) {
+  constructor () {
     this.textBox = new PIXI.Graphics();
+    this.textBox.visible = true;
 
-    let height = (2 + Object.keys(info).length) * 20;
+    this._textObj = new PIXI.Text('No cell info', {
+      fontSize: 12,
+      wordWrap: true,
+      wordWrapWidth: 140,
+    });
+    this._textObj.position = new PIXI.Point(5, 2);
 
+    this.textBox.addChild(this._textObj);
+
+    this._draw();
+  }
+
+  setText (x, y, info={}) {
     let text =`x: ${x}\ny: ${y}`;
     for (let prop in info) {
       text += `\n${prop}: ${info[prop]}`;
     }
 
-    const textObj = new PIXI.Text(text, {
-      fontSize: 12,
-      padding: 5,
-    });
-    textObj.position = new PIXI.Point(5, 2);
+    this._textObj.text = text;
 
-    this.textBox.lineStyle(1, 0)
+    this._draw();
+  }
+
+  _draw() {
+    const height = this._textObj.height + 4;
+
+    this.textBox.clear()
+      .lineStyle(1, 0)
       .beginFill(0xFFFFFF)
       .drawRoundedRect(0, 0, 150, height, 5)
-      .endFill()
-      .addChild(textObj);
-    this.textBox.visible = true;
+      .endFill();
   }
 }

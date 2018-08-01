@@ -21,11 +21,11 @@ export class Tile {
     this._graphic.on('pointermove', evt => {
       const pos = evt.data.getLocalPosition(evt.currentTarget);
 
-      pointerMoveCallback(Math.floor(pos.x / CELL_SIDE_LENGTH), Math.floor(pos.y / CELL_SIDE_LENGTH));
+      pointerMoveCallback(this, evt, Math.floor(pos.x / CELL_SIDE_LENGTH), Math.floor(pos.y / CELL_SIDE_LENGTH));
     });
 
     /**
-     *  @param func Takes 2 arguments: (x, y)
+     *  @param func Takes 4 arguments: (tile, evt, x, y) where "tile" is this tile instance and "evt" is the pointermove event
      */
     this.setPointerCallback = function(func) {
       pointerMoveCallback = func;

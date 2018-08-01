@@ -145,12 +145,13 @@ function getInitDataCallback(result) {
   }
 
   for (const cell of result.blockedCells) {
-    visualizer.setCell(cell.x, cell.y, visualizer.BLOCKED);
+    updateCellState(cell, 'BLOCKED', visualizer);
   }
 
   visualizer.setCellRequestFunction((x, y) => {
-    console.log(`x: ${x}, y: ${y}`);
-    return {};
+    const cell = cellIndex[x][y];
+
+    return !!cell ? {State: cellIndex[x][y].state} : {State: 'Not explored'};
   });
 
   visualizer.redraw();
@@ -189,7 +190,7 @@ function getAnimationFunction(visualizer) {
       }
 
       for (let iterationCell of it.newEnvelopeNodesCells) {
-        updateCellState(iterationCell, 'EXPANDED', expandedCells, visualizer);
+        updateCellState(iterationCell, 'EXPANDED', visualizer, expandedCells);
       }
 
       //BACKUP
@@ -203,7 +204,7 @@ function getAnimationFunction(visualizer) {
 
       if (!!it.newBackedUpCells) {
         for (let iterationCell of it.newBackedUpCells) {
-          updateCellState(iterationCell, 'BACKED_UP', backedUpCells, visualizer);
+          updateCellState(iterationCell, 'BACKED_UP', visualizer, backedUpCells);
         }
       }
 
@@ -218,7 +219,7 @@ function getAnimationFunction(visualizer) {
 
         //draw new path
         for (let iterationCell of it.projectedPath) {
-          updateCellState(iterationCell, 'PATH_PROJECTION', projection, visualizer);
+          updateCellState(iterationCell, 'PATH_PROJECTION', visualizer, projection);
         }
       }
 
@@ -240,7 +241,7 @@ function getAnimationFunction(visualizer) {
   }
 }
 
-function updateCellState(iterationCell, newState, storageArray, visualizer) {
+function updateCellState(iterationCell, newState, visualizer, storageArray) {
   let x = iterationCell.x;
   let y = iterationCell.y;
   let cell = cellIndex[x][y];
@@ -253,7 +254,7 @@ function updateCellState(iterationCell, newState, storageArray, visualizer) {
   cell.state = newState;
 
   visualizer.setCell(cell.x, cell.y, visualizer[cell.state]);
-  storageArray.push(cell);
+  !!storageArray && storageArray.push(cell);
 }
 
 class Cell {
@@ -265,12 +266,14 @@ class Cell {
       FREE: true,
       EXPANDED: false,
       BACKED_UP: false,
-      PATH_PROJECTION: false
+      PATH_PROJECTION: false,
+      BLOCKED: false
     };
   }
 
   get state() { //method defines precedence
-    if (this._stateFlags.PATH_PROJECTION) return 'PATH_PROJECTION';
+    if (this._stateFlags.BLOCKED) return 'BLOCKED';
+    else if (this._stateFlags.PATH_PROJECTION) return 'PATH_PROJECTION';
     else if (this._stateFlags.BACKED_UP) return 'BACKED_UP';
     else if (this._stateFlags.EXPANDED) return 'EXPANDED';
     else return 'FREE';
@@ -278,6 +281,11 @@ class Cell {
 
   set state(stateName) {
     this._stateFlags[stateName] = true;
+    if (stateName === 'BLOCKED') {
+      for (let prop in this._stateFlags) {
+        if (prop !== 'BLOCKED') this._stateFlags[prop] = false;
+      }
+    }
   }
 
   clearState(stateName) {
