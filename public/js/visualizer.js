@@ -1,7 +1,6 @@
 import * as PIXIHook from "./lib/pixi.js";
+import {Tile, CELL_SIDE_LENGTH} from "./tile.js";
 
-//constant side length. We scale grid cells to make them fit into container
-const CELL_SIDE_LENGTH = 30;
 const AGENT_COLOR = 0xFFA500;
 const MAX_TILES = 30000
 
@@ -49,6 +48,13 @@ export class Visualizer {
       width: domElement.clientWidth,
       height: domElement.clientHeight
     });
+    //for pointermove tile events
+    this._app.renderer.plugins.interaction.moveWhenInside = true;
+
+    const container = this._gridContainer = new PIXI.Container();
+    this._app.stage.addChild(container);
+
+    this._requestCellInfo = ()=>{}; //no-op
 
     const totalCells = width * height;
     const tileRatio = totalCells / MAX_TILES;
@@ -66,7 +72,7 @@ export class Visualizer {
     for (let y = 0; y < tileHeight; y++) {
       const row = [];
       for (let x = 0; x < tileWidth; x++) {
-        const newTile = new Tile();
+        const newTile = new Tile(x, y);
 
         // quadruple for loop...ick. But it's all bounded by width * height, so I think it's fine...
         for (let cellY = 0; cellY < this._tileSize; cellY++) {
@@ -83,7 +89,7 @@ export class Visualizer {
         tileGraphic.position = new PIXI.Point(x * CELL_SIDE_LENGTH * this._tileSize, y * CELL_SIDE_LENGTH * this._tileSize);
 
         row.push(newTile);
-        this._app.stage.addChild(tileGraphic);
+        container.addChild(tileGraphic);
       }
       this._tileGrid.push(row);
     }
@@ -92,7 +98,7 @@ export class Visualizer {
 
     this.setAgentLocation(0, 0);
 
-    this._app.stage.addChild(this._agent);
+    container.addChild(this._agent);
     domElement.appendChild(this._app.view);
     this.rescale();
   }
@@ -112,7 +118,7 @@ export class Visualizer {
     rescaleCircle(newGoal, this.GOAL, this._scale);
 
     this.setCell(x, y, this.GOAL)
-      ._app.stage.addChild(newGoal);
+      ._gridContainer.addChild(newGoal);
 
     return this;
   }
@@ -154,7 +160,7 @@ export class Visualizer {
       scale = targetScale;
     }
     
-    this._app.stage.scale = new PIXI.Point(scale, scale);
+    this._gridContainer.scale = new PIXI.Point(scale, scale);
 
     //ensures the agent always stays visible
     rescaleCircle(this._agent, AGENT_COLOR, scale);
@@ -174,7 +180,7 @@ export class Visualizer {
   }
 
   repositionStage(x, y) {
-    this._app.stage.position = new PIXI.Point(x, y);
+    this._gridContainer.position = new PIXI.Point(x, y);
   }
 
   redraw() {
@@ -186,6 +192,16 @@ export class Visualizer {
     this._redrawCache = []; //reset cache
 
     return this;
+  }
+
+  /**
+   *  @param func A function which takes 2 arguments: (x, y)
+   *  and returns an object whose enumerable properties will be
+   *  displayed line-by-line in the info graphic displayed when
+   *  hovering over a cell
+   */
+  setCellRequestFunction(func) {
+    this._requestCellInfo = func
   }
 }
 
@@ -227,50 +243,28 @@ Object.defineProperty(Visualizer.prototype, 'PATH_PROJECTION', {
   configurable: false
 });
 
-class Tile {
-  constructor() {
-    this._graphic = new PIXI.Graphics();
-    this._cellGrid = [];
-    this._addCursor = -1;
+export class CellInfo {
+  constructor (x, y, info={}) {
+    this.textBox = new PIXI.Graphics();
 
-    this.cached = false;
-  }
+    let height = (2 + Object.keys(info).length) * 20;
 
-  addCell(cellType) {
-    this._cellGrid[this._addCursor].push(cellType);
-    return this;
-  }
-
-  addRow() {
-    this._cellGrid.push([]);
-    this._addCursor++;
-    return this;
-  }
-
-  setCell(x, y, cellType) {
-    this._cellGrid[y][x] = cellType;
-    return this;
-  }
-
-  draw(scale) {
-    this._graphic.clear().lineStyle(1, 0xe3e3e3);
-
-    for (let y = 0; y < this._cellGrid.length; y++) {
-      const row = this._cellGrid[y];
-      for (let x = 0; x < row.length; x++) {
-        const posX = CELL_SIDE_LENGTH * x;
-        const posY = CELL_SIDE_LENGTH * y;
-
-        let side = CELL_SIDE_LENGTH;
-        if (scale * CELL_SIDE_LENGTH < 1) side = 1/scale
-
-        this._graphic.beginFill(row[x])
-          .drawRect(posX, posY, side, side)
-          .endFill();
-      }
+    let text =`x: ${x}\ny: ${y}`;
+    for (let prop in info) {
+      text += `\n${prop}: ${info[prop]}`;
     }
-    return this;
-  }
 
-  getGraphic() { return this._graphic; }
+    const textObj = new PIXI.Text(text, {
+      fontSize: 12,
+      padding: 5,
+    });
+    textObj.position = new PIXI.Point(5, 2);
+
+    this.textBox.lineStyle(1, 0)
+      .beginFill(0xFFFFFF)
+      .drawRoundedRect(0, 0, 150, height, 5)
+      .endFill()
+      .addChild(textObj);
+    this.textBox.visible = true;
+  }
 }

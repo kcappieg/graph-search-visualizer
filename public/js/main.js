@@ -1,5 +1,5 @@
 import * as PIXIHook from "./lib/pixi.js";
-import {Visualizer} from "./visualizer.js";
+import {Visualizer, CellInfo} from "./visualizer.js";
 import Thrift from "./lib/thrift/thrift.js";
 import {NoDataException} from "./lib/thrift/gen-js/visualizer_types.js";
 import BrokerClient from "./lib/thrift/gen-js/Broker.js";
@@ -72,6 +72,12 @@ export const setAnimationSpeed = (newSpeed) => {
 
   visualizer.ticker.speed = newSpeed;
 }
+
+/* Below is PoC for adding text box to the canvas*/
+// export const doTestText = () => {
+//   testText.textBox.position = new PIXI.Point(20, 20);
+//   visualizer._app.stage.addChild(testText.textBox);
+// }
 
 /*************************
   RPC / Animate Procedures

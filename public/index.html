@@ -15,6 +15,7 @@
     <script src="./js/lib/thrift/gen-js/Broker.js" type="module"></script>
     <script src="./js/lib/thrift/gen-js/visualizer_types.js" type="module"></script>
     <script src="./js/visualizer.js" type="module"></script>
+    <script src="./js/tile.js" type="module"></script>
     <script src="./js/main.js" type="module" async=true></script>
     <script type="module">
       import {init, stopPolling, startPolling, setAnimationSpeed, getAnimationSpeed} from "./js/main.js";
@@ -36,7 +37,7 @@
         <h1 class="col-12 text-center">Visualizer for Graph Search Algorithms</h1>
       </div>
       <div class="row no-gutters">
-        <div class="col-12 col-md-8 col-lg-10" id="grid-container" style="border: 1px solid gray; min-height: 800px"></div>
+        <div class="col-12 col-md-8 col-lg-10" id="grid-container" style="border: 1px solid gray; min-height: 900px"></div>
         <div class="col-12 col-md-4 col-lg-2 p-1 container-fluid p-2" id="controls">
           <div class="row no-gutters pb-3">
             <div class="col border-bottom pb-1">

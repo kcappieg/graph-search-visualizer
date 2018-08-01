@@ -74,3 +74,6 @@ typings/
 
 # Thrift
 /thrift_compiler/gen*
+
+# Sublime Text
+*.sublime-project
