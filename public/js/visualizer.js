@@ -2,7 +2,7 @@ import * as PIXIHook from "./lib/pixi.js";
 import {Tile, CELL_SIDE_LENGTH} from "./tile.js";
 
 const AGENT_COLOR = 0xFFA500;
-const MAX_TILES = 10000
+const MAX_TILES = 1000
 
 function initCircle(color) {
   return new PIXI.Graphics()

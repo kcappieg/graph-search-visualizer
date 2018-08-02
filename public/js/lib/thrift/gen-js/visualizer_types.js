@@ -183,7 +183,8 @@ const Iteration = function(args) {
   this.newEnvelopeNodes = null;
   this.clearPreviousBackup = null;
   this.newBackedUpNodes = null;
-  this.projectedPath = null;
+  this.addToProjectedPath = null;
+  this.removeFromProjectedPath = null;
   if (args) {
     if (args.agentLocation !== undefined && args.agentLocation !== null) {
       this.agentLocation = new Location(args.agentLocation);
@@ -206,8 +207,11 @@ const Iteration = function(args) {
     if (args.newBackedUpNodes !== undefined && args.newBackedUpNodes !== null) {
       this.newBackedUpNodes = Thrift.copyList(args.newBackedUpNodes, [Node]);
     }
-    if (args.projectedPath !== undefined && args.projectedPath !== null) {
-      this.projectedPath = Thrift.copyList(args.projectedPath, [Location]);
+    if (args.addToProjectedPath !== undefined && args.addToProjectedPath !== null) {
+      this.addToProjectedPath = Thrift.copyList(args.addToProjectedPath, [Location]);
+    }
+    if (args.removeFromProjectedPath !== undefined && args.removeFromProjectedPath !== null) {
+      this.removeFromProjectedPath = Thrift.copyList(args.removeFromProjectedPath, [Location]);
     }
   }
 };
@@ -293,7 +297,7 @@ Iteration.prototype.read = function(input) {
       if (ftype == Thrift.Type.SET) {
         var _size24 = 0;
         var _rtmp328;
-        this.projectedPath = [];
+        this.addToProjectedPath = [];
         var _etype27 = 0;
         _rtmp328 = input.readSetBegin();
         _etype27 = _rtmp328.etype;
@@ -303,7 +307,28 @@ Iteration.prototype.read = function(input) {
           var elem30 = null;
           elem30 = new Location();
           elem30.read(input);
-          this.projectedPath.push(elem30);
+          this.addToProjectedPath.push(elem30);
+        }
+        input.readSetEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 7:
+      if (ftype == Thrift.Type.SET) {
+        var _size31 = 0;
+        var _rtmp335;
+        this.removeFromProjectedPath = [];
+        var _etype34 = 0;
+        _rtmp335 = input.readSetBegin();
+        _etype34 = _rtmp335.etype;
+        _size31 = _rtmp335.size;
+        for (var _i36 = 0; _i36 < _size31; ++_i36)
+        {
+          var elem37 = null;
+          elem37 = new Location();
+          elem37.read(input);
+          this.removeFromProjectedPath.push(elem37);
         }
         input.readSetEnd();
       } else {
@@ -334,12 +359,12 @@ Iteration.prototype.write = function(output) {
   if (this.newEnvelopeNodes !== null && this.newEnvelopeNodes !== undefined) {
     output.writeFieldBegin('newEnvelopeNodes', Thrift.Type.SET, 3);
     output.writeSetBegin(Thrift.Type.STRUCT, this.newEnvelopeNodes.length);
-    for (var iter31 in this.newEnvelopeNodes)
+    for (var iter38 in this.newEnvelopeNodes)
     {
-      if (this.newEnvelopeNodes.hasOwnProperty(iter31))
+      if (this.newEnvelopeNodes.hasOwnProperty(iter38))
       {
-        iter31 = this.newEnvelopeNodes[iter31];
-        iter31.write(output);
+        iter38 = this.newEnvelopeNodes[iter38];
+        iter38.write(output);
       }
     }
     output.writeSetEnd();
@@ -353,26 +378,40 @@ Iteration.prototype.write = function(output) {
   if (this.newBackedUpNodes !== null && this.newBackedUpNodes !== undefined) {
     output.writeFieldBegin('newBackedUpNodes', Thrift.Type.SET, 5);
     output.writeSetBegin(Thrift.Type.STRUCT, this.newBackedUpNodes.length);
-    for (var iter32 in this.newBackedUpNodes)
+    for (var iter39 in this.newBackedUpNodes)
     {
-      if (this.newBackedUpNodes.hasOwnProperty(iter32))
+      if (this.newBackedUpNodes.hasOwnProperty(iter39))
       {
-        iter32 = this.newBackedUpNodes[iter32];
-        iter32.write(output);
+        iter39 = this.newBackedUpNodes[iter39];
+        iter39.write(output);
       }
     }
     output.writeSetEnd();
     output.writeFieldEnd();
   }
-  if (this.projectedPath !== null && this.projectedPath !== undefined) {
-    output.writeFieldBegin('projectedPath', Thrift.Type.SET, 6);
-    output.writeSetBegin(Thrift.Type.STRUCT, this.projectedPath.length);
-    for (var iter33 in this.projectedPath)
+  if (this.addToProjectedPath !== null && this.addToProjectedPath !== undefined) {
+    output.writeFieldBegin('addToProjectedPath', Thrift.Type.SET, 6);
+    output.writeSetBegin(Thrift.Type.STRUCT, this.addToProjectedPath.length);
+    for (var iter40 in this.addToProjectedPath)
     {
-      if (this.projectedPath.hasOwnProperty(iter33))
+      if (this.addToProjectedPath.hasOwnProperty(iter40))
       {
-        iter33 = this.projectedPath[iter33];
-        iter33.write(output);
+        iter40 = this.addToProjectedPath[iter40];
+        iter40.write(output);
+      }
+    }
+    output.writeSetEnd();
+    output.writeFieldEnd();
+  }
+  if (this.removeFromProjectedPath !== null && this.removeFromProjectedPath !== undefined) {
+    output.writeFieldBegin('removeFromProjectedPath', Thrift.Type.SET, 7);
+    output.writeSetBegin(Thrift.Type.STRUCT, this.removeFromProjectedPath.length);
+    for (var iter41 in this.removeFromProjectedPath)
+    {
+      if (this.removeFromProjectedPath.hasOwnProperty(iter41))
+      {
+        iter41 = this.removeFromProjectedPath[iter41];
+        iter41.write(output);
       }
     }
     output.writeSetEnd();
@@ -415,19 +454,19 @@ IterationBundle.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size34 = 0;
-        var _rtmp338;
+        var _size42 = 0;
+        var _rtmp346;
         this.iterations = [];
-        var _etype37 = 0;
-        _rtmp338 = input.readListBegin();
-        _etype37 = _rtmp338.etype;
-        _size34 = _rtmp338.size;
-        for (var _i39 = 0; _i39 < _size34; ++_i39)
+        var _etype45 = 0;
+        _rtmp346 = input.readListBegin();
+        _etype45 = _rtmp346.etype;
+        _size42 = _rtmp346.size;
+        for (var _i47 = 0; _i47 < _size42; ++_i47)
         {
-          var elem40 = null;
-          elem40 = new Iteration();
-          elem40.read(input);
-          this.iterations.push(elem40);
+          var elem48 = null;
+          elem48 = new Iteration();
+          elem48.read(input);
+          this.iterations.push(elem48);
         }
         input.readListEnd();
       } else {
@@ -455,12 +494,12 @@ IterationBundle.prototype.write = function(output) {
   if (this.iterations !== null && this.iterations !== undefined) {
     output.writeFieldBegin('iterations', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.STRUCT, this.iterations.length);
-    for (var iter41 in this.iterations)
+    for (var iter49 in this.iterations)
     {
-      if (this.iterations.hasOwnProperty(iter41))
+      if (this.iterations.hasOwnProperty(iter49))
       {
-        iter41 = this.iterations[iter41];
-        iter41.write(output);
+        iter49 = this.iterations[iter49];
+        iter49.write(output);
       }
     }
     output.writeListEnd();
@@ -548,19 +587,19 @@ Init.prototype.read = function(input) {
       break;
       case 4:
       if (ftype == Thrift.Type.LIST) {
-        var _size42 = 0;
-        var _rtmp346;
+        var _size50 = 0;
+        var _rtmp354;
         this.goals = [];
-        var _etype45 = 0;
-        _rtmp346 = input.readListBegin();
-        _etype45 = _rtmp346.etype;
-        _size42 = _rtmp346.size;
-        for (var _i47 = 0; _i47 < _size42; ++_i47)
+        var _etype53 = 0;
+        _rtmp354 = input.readListBegin();
+        _etype53 = _rtmp354.etype;
+        _size50 = _rtmp354.size;
+        for (var _i55 = 0; _i55 < _size50; ++_i55)
         {
-          var elem48 = null;
-          elem48 = new Location();
-          elem48.read(input);
-          this.goals.push(elem48);
+          var elem56 = null;
+          elem56 = new Location();
+          elem56.read(input);
+          this.goals.push(elem56);
         }
         input.readListEnd();
       } else {
@@ -569,19 +608,19 @@ Init.prototype.read = function(input) {
       break;
       case 5:
       if (ftype == Thrift.Type.SET) {
-        var _size49 = 0;
-        var _rtmp353;
+        var _size57 = 0;
+        var _rtmp361;
         this.blockedCells = [];
-        var _etype52 = 0;
-        _rtmp353 = input.readSetBegin();
-        _etype52 = _rtmp353.etype;
-        _size49 = _rtmp353.size;
-        for (var _i54 = 0; _i54 < _size49; ++_i54)
+        var _etype60 = 0;
+        _rtmp361 = input.readSetBegin();
+        _etype60 = _rtmp361.etype;
+        _size57 = _rtmp361.size;
+        for (var _i62 = 0; _i62 < _size57; ++_i62)
         {
-          var elem55 = null;
-          elem55 = new Location();
-          elem55.read(input);
-          this.blockedCells.push(elem55);
+          var elem63 = null;
+          elem63 = new Location();
+          elem63.read(input);
+          this.blockedCells.push(elem63);
         }
         input.readSetEnd();
       } else {
@@ -617,12 +656,12 @@ Init.prototype.write = function(output) {
   if (this.goals !== null && this.goals !== undefined) {
     output.writeFieldBegin('goals', Thrift.Type.LIST, 4);
     output.writeListBegin(Thrift.Type.STRUCT, this.goals.length);
-    for (var iter56 in this.goals)
+    for (var iter64 in this.goals)
     {
-      if (this.goals.hasOwnProperty(iter56))
+      if (this.goals.hasOwnProperty(iter64))
       {
-        iter56 = this.goals[iter56];
-        iter56.write(output);
+        iter64 = this.goals[iter64];
+        iter64.write(output);
       }
     }
     output.writeListEnd();
@@ -631,12 +670,12 @@ Init.prototype.write = function(output) {
   if (this.blockedCells !== null && this.blockedCells !== undefined) {
     output.writeFieldBegin('blockedCells', Thrift.Type.SET, 5);
     output.writeSetBegin(Thrift.Type.STRUCT, this.blockedCells.length);
-    for (var iter57 in this.blockedCells)
+    for (var iter65 in this.blockedCells)
     {
-      if (this.blockedCells.hasOwnProperty(iter57))
+      if (this.blockedCells.hasOwnProperty(iter65))
       {
-        iter57 = this.blockedCells[iter57];
-        iter57.write(output);
+        iter65 = this.blockedCells[iter65];
+        iter65.write(output);
       }
     }
     output.writeSetEnd();

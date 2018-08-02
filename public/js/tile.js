@@ -51,18 +51,25 @@ export class Tile {
   }
 
   draw(scale) {
-    this._graphic.clear().lineStyle(1, 0xe3e3e3);
+    this._graphic.clear();
+
+    let sideScale = scale * CELL_SIDE_LENGTH;
+    if (sideScale >= 1) this._graphic.lineStyle(1, 0xe3e3e3)
 
     for (let y = 0; y < this._cellGrid.length; y++) {
       const row = this._cellGrid[y];
       for (let x = 0; x < row.length; x++) {
-        const posX = CELL_SIDE_LENGTH * x;
-        const posY = CELL_SIDE_LENGTH * y;
+        let posX = CELL_SIDE_LENGTH * x;
+        let posY = CELL_SIDE_LENGTH * y;
 
         let side = CELL_SIDE_LENGTH;
         //cells marked as visually important are blown up
-        if (scale * CELL_SIDE_LENGTH < 1) {
+        if (sideScale < 1 && importantCellTypes[row[x]]) {
           side = 1/scale;
+          let shift = side/4;
+
+          posX -= shift;
+          posY -= shift;
         }
 
         this._graphic.beginFill(row[x])

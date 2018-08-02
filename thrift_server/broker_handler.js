@@ -53,10 +53,7 @@ class BrokerHandler {
     if (currentBuffer.length === MAX_BUFFER_SIZE) {
       buffers.push([]);
       producerBufferIndex++;
-      console.log('New buffer!');
     }
-
-    console.log('stuck?');
   }
 
   getInitData(result) {

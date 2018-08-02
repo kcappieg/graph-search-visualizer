@@ -20,7 +20,6 @@ let deltaTime;
 //for tracking visualization
 let expandedCells;
 let backedUpCells;
-let projection;
 
 //will be indexed by x,y
 const cellIndexHandler = {
@@ -118,7 +117,6 @@ async function init(container, animationHook) {
 
   expandedCells = [];
   backedUpCells = [];
-  projection = [];
 
   cellIndex = new Proxy({}, cellIndexHandler);
 
@@ -260,17 +258,19 @@ function getAnimationFunction(visualizer, hook) {
       }
 
       //AGENT
-      if (!!it.projectedPath) {
+      if (!!it.removeFromProjectedPath) {
         //clear previous path
-        for (let cell of projection) {
+        for (let state of it.removeFromProjectedPath) {
+          const cell = cellIndex[state.x][state.y];
+
           cell.clearState('PATH_PROJECTION');
           visualizer.setCell(cell.x, cell.y, visualizer[cell.state]);
         }
-        projection = [];
-
+      }
+      if (!!it.addToProjectedPath) {
         //draw new path
-        for (let iterationCell of it.projectedPath) {
-          updateCellState(iterationCell, 'PATH_PROJECTION', visualizer, projection);
+        for (let iterationCell of it.addToProjectedPath) {
+          updateCellState(iterationCell, 'PATH_PROJECTION', visualizer);
         }
       }
 

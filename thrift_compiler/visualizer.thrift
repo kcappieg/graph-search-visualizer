@@ -16,7 +16,8 @@ struct Iteration {
   3: required set<Node> newEnvelopeNodes,
   4: optional bool clearPreviousBackup,
   5: optional set<Node> newBackedUpNodes,
-  6: optional set<Location> projectedPath
+  6: optional set<Location> addToProjectedPath
+  7: optional set<Location> removeFromProjectedPath
 }
 
 struct IterationBundle {

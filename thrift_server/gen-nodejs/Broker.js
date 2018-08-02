@@ -204,19 +204,19 @@ Broker_publishIterations_args.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size58 = 0;
-        var _rtmp362;
+        var _size66 = 0;
+        var _rtmp370;
         this.itDataList = [];
-        var _etype61 = 0;
-        _rtmp362 = input.readListBegin();
-        _etype61 = _rtmp362.etype;
-        _size58 = _rtmp362.size;
-        for (var _i63 = 0; _i63 < _size58; ++_i63)
+        var _etype69 = 0;
+        _rtmp370 = input.readListBegin();
+        _etype69 = _rtmp370.etype;
+        _size66 = _rtmp370.size;
+        for (var _i71 = 0; _i71 < _size66; ++_i71)
         {
-          var elem64 = null;
-          elem64 = new ttypes.Iteration();
-          elem64.read(input);
-          this.itDataList.push(elem64);
+          var elem72 = null;
+          elem72 = new ttypes.Iteration();
+          elem72.read(input);
+          this.itDataList.push(elem72);
         }
         input.readListEnd();
       } else {
@@ -240,12 +240,12 @@ Broker_publishIterations_args.prototype.write = function(output) {
   if (this.itDataList !== null && this.itDataList !== undefined) {
     output.writeFieldBegin('itDataList', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.STRUCT, this.itDataList.length);
-    for (var iter65 in this.itDataList)
+    for (var iter73 in this.itDataList)
     {
-      if (this.itDataList.hasOwnProperty(iter65))
+      if (this.itDataList.hasOwnProperty(iter73))
       {
-        iter65 = this.itDataList[iter65];
-        iter65.write(output);
+        iter73 = this.itDataList[iter73];
+        iter73.write(output);
       }
     }
     output.writeListEnd();
