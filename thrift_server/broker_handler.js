@@ -1,7 +1,6 @@
 const thrift = require('thrift');
 const types = require('./gen-nodejs/visualizer_types.js');
 
-const ITERATION_CHUNK_SIZE = 10; //10 iterations at a time
 const MAX_BUFFER_SIZE = 1000;
 
 let privateInitData = null;//getDemoInit();
@@ -27,18 +26,37 @@ class BrokerHandler {
 
     privateInitData = initData;
     buffers = [[]];
+    producerBufferIndex = 0;
   }
-  publishIteration(itData) {
-    console.log('publish iteration');
+  publishIterations(itList) {
+    console.log(`publish ${itList.length} iterations`);
+    let iterations = itList;
 
-    const currentBuffer = buffers[producerBufferIndex]
-    currentBuffer.push(itData);
-    console.log(itData.clearPreviousBackup);
+    let currentBuffer = buffers[producerBufferIndex]
 
-    if (currentBuffer.length >= MAX_BUFFER_SIZE) {
+    let remainingSpace = MAX_BUFFER_SIZE - currentBuffer.length;
+    while (remainingSpace < iterations.length) {
+      currentBuffer.push(iterations.slice(0, remainingSpace));
+
+      currentBuffer = [];
+      buffers.push(currentBuffer);
+      producerBufferIndex++;
+
+      iterations = iterations.slice(remainingSpace);
+      remainingSpace = MAX_BUFFER_SIZE;
+    }
+    
+    if (iterations.length > 0) {
+      currentBuffer.push(...iterations);
+    }
+
+    if (currentBuffer.length === MAX_BUFFER_SIZE) {
       buffers.push([]);
       producerBufferIndex++;
+      console.log('New buffer!');
     }
+
+    console.log('stuck?');
   }
 
   getInitData(result) {
@@ -121,7 +139,10 @@ function getDemoIterations() {
     const expl = [];
 
     for (let j = 0; j < 5; j++) {
-      expl.push(new types.Location({x:nextExploredNode.x, y:nextExploredNode.y}));
+      expl.push(new types.Node({
+        loc: new types.Location({x:nextExploredNode.x, y:nextExploredNode.y}),
+        data: {'Hello': 'World'}
+      }));
 
       nextExploredNode.x++;
 
@@ -137,7 +158,7 @@ function getDemoIterations() {
     iterations.push(new types.Iteration({
       clearPreviousEnvelope: false,
       agentLocation: new types.Location({x:loc.x, y:loc.y}),
-      newEnvelopeNodesCells: expl
+      newEnvelopeNodes: expl
     }));
   }
 

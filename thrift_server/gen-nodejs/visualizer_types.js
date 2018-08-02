@@ -81,12 +81,108 @@ Location.prototype.write = function(output) {
   return;
 };
 
+var Node = module.exports.Node = function(args) {
+  this.loc = null;
+  this.data = null;
+  if (args) {
+    if (args.loc !== undefined && args.loc !== null) {
+      this.loc = new ttypes.Location(args.loc);
+    } else {
+      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field loc is unset!');
+    }
+    if (args.data !== undefined && args.data !== null) {
+      this.data = Thrift.copyMap(args.data, [null]);
+    }
+  }
+};
+Node.prototype = {};
+Node.prototype.read = function(input) {
+  input.readStructBegin();
+  while (true)
+  {
+    var ret = input.readFieldBegin();
+    var fname = ret.fname;
+    var ftype = ret.ftype;
+    var fid = ret.fid;
+    if (ftype == Thrift.Type.STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+      if (ftype == Thrift.Type.STRUCT) {
+        this.loc = new ttypes.Location();
+        this.loc.read(input);
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      case 2:
+      if (ftype == Thrift.Type.MAP) {
+        var _size0 = 0;
+        var _rtmp34;
+        this.data = {};
+        var _ktype1 = 0;
+        var _vtype2 = 0;
+        _rtmp34 = input.readMapBegin();
+        _ktype1 = _rtmp34.ktype;
+        _vtype2 = _rtmp34.vtype;
+        _size0 = _rtmp34.size;
+        for (var _i5 = 0; _i5 < _size0; ++_i5)
+        {
+          var key6 = null;
+          var val7 = null;
+          key6 = input.readString();
+          val7 = input.readString();
+          this.data[key6] = val7;
+        }
+        input.readMapEnd();
+      } else {
+        input.skip(ftype);
+      }
+      break;
+      default:
+        input.skip(ftype);
+    }
+    input.readFieldEnd();
+  }
+  input.readStructEnd();
+  return;
+};
+
+Node.prototype.write = function(output) {
+  output.writeStructBegin('Node');
+  if (this.loc !== null && this.loc !== undefined) {
+    output.writeFieldBegin('loc', Thrift.Type.STRUCT, 1);
+    this.loc.write(output);
+    output.writeFieldEnd();
+  }
+  if (this.data !== null && this.data !== undefined) {
+    output.writeFieldBegin('data', Thrift.Type.MAP, 2);
+    output.writeMapBegin(Thrift.Type.STRING, Thrift.Type.STRING, Thrift.objectLength(this.data));
+    for (var kiter8 in this.data)
+    {
+      if (this.data.hasOwnProperty(kiter8))
+      {
+        var viter9 = this.data[kiter8];
+        output.writeString(kiter8);
+        output.writeString(viter9);
+      }
+    }
+    output.writeMapEnd();
+    output.writeFieldEnd();
+  }
+  output.writeFieldStop();
+  output.writeStructEnd();
+  return;
+};
+
 var Iteration = module.exports.Iteration = function(args) {
   this.agentLocation = null;
   this.clearPreviousEnvelope = null;
-  this.newEnvelopeNodesCells = null;
+  this.newEnvelopeNodes = null;
   this.clearPreviousBackup = null;
-  this.newBackedUpCells = null;
+  this.newBackedUpNodes = null;
   this.projectedPath = null;
   if (args) {
     if (args.agentLocation !== undefined && args.agentLocation !== null) {
@@ -99,16 +195,16 @@ var Iteration = module.exports.Iteration = function(args) {
     } else {
       throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field clearPreviousEnvelope is unset!');
     }
-    if (args.newEnvelopeNodesCells !== undefined && args.newEnvelopeNodesCells !== null) {
-      this.newEnvelopeNodesCells = Thrift.copyList(args.newEnvelopeNodesCells, [ttypes.Location]);
+    if (args.newEnvelopeNodes !== undefined && args.newEnvelopeNodes !== null) {
+      this.newEnvelopeNodes = Thrift.copyList(args.newEnvelopeNodes, [ttypes.Node]);
     } else {
-      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field newEnvelopeNodesCells is unset!');
+      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field newEnvelopeNodes is unset!');
     }
     if (args.clearPreviousBackup !== undefined && args.clearPreviousBackup !== null) {
       this.clearPreviousBackup = args.clearPreviousBackup;
     }
-    if (args.newBackedUpCells !== undefined && args.newBackedUpCells !== null) {
-      this.newBackedUpCells = Thrift.copyList(args.newBackedUpCells, [ttypes.Location]);
+    if (args.newBackedUpNodes !== undefined && args.newBackedUpNodes !== null) {
+      this.newBackedUpNodes = Thrift.copyList(args.newBackedUpNodes, [ttypes.Node]);
     }
     if (args.projectedPath !== undefined && args.projectedPath !== null) {
       this.projectedPath = Thrift.copyList(args.projectedPath, [ttypes.Location]);
@@ -146,19 +242,19 @@ Iteration.prototype.read = function(input) {
       break;
       case 3:
       if (ftype == Thrift.Type.SET) {
-        var _size0 = 0;
-        var _rtmp34;
-        this.newEnvelopeNodesCells = [];
-        var _etype3 = 0;
-        _rtmp34 = input.readSetBegin();
-        _etype3 = _rtmp34.etype;
-        _size0 = _rtmp34.size;
-        for (var _i5 = 0; _i5 < _size0; ++_i5)
+        var _size10 = 0;
+        var _rtmp314;
+        this.newEnvelopeNodes = [];
+        var _etype13 = 0;
+        _rtmp314 = input.readSetBegin();
+        _etype13 = _rtmp314.etype;
+        _size10 = _rtmp314.size;
+        for (var _i15 = 0; _i15 < _size10; ++_i15)
         {
-          var elem6 = null;
-          elem6 = new ttypes.Location();
-          elem6.read(input);
-          this.newEnvelopeNodesCells.push(elem6);
+          var elem16 = null;
+          elem16 = new ttypes.Node();
+          elem16.read(input);
+          this.newEnvelopeNodes.push(elem16);
         }
         input.readSetEnd();
       } else {
@@ -174,19 +270,19 @@ Iteration.prototype.read = function(input) {
       break;
       case 5:
       if (ftype == Thrift.Type.SET) {
-        var _size7 = 0;
-        var _rtmp311;
-        this.newBackedUpCells = [];
-        var _etype10 = 0;
-        _rtmp311 = input.readSetBegin();
-        _etype10 = _rtmp311.etype;
-        _size7 = _rtmp311.size;
-        for (var _i12 = 0; _i12 < _size7; ++_i12)
+        var _size17 = 0;
+        var _rtmp321;
+        this.newBackedUpNodes = [];
+        var _etype20 = 0;
+        _rtmp321 = input.readSetBegin();
+        _etype20 = _rtmp321.etype;
+        _size17 = _rtmp321.size;
+        for (var _i22 = 0; _i22 < _size17; ++_i22)
         {
-          var elem13 = null;
-          elem13 = new ttypes.Location();
-          elem13.read(input);
-          this.newBackedUpCells.push(elem13);
+          var elem23 = null;
+          elem23 = new ttypes.Node();
+          elem23.read(input);
+          this.newBackedUpNodes.push(elem23);
         }
         input.readSetEnd();
       } else {
@@ -195,19 +291,19 @@ Iteration.prototype.read = function(input) {
       break;
       case 6:
       if (ftype == Thrift.Type.SET) {
-        var _size14 = 0;
-        var _rtmp318;
+        var _size24 = 0;
+        var _rtmp328;
         this.projectedPath = [];
-        var _etype17 = 0;
-        _rtmp318 = input.readSetBegin();
-        _etype17 = _rtmp318.etype;
-        _size14 = _rtmp318.size;
-        for (var _i19 = 0; _i19 < _size14; ++_i19)
+        var _etype27 = 0;
+        _rtmp328 = input.readSetBegin();
+        _etype27 = _rtmp328.etype;
+        _size24 = _rtmp328.size;
+        for (var _i29 = 0; _i29 < _size24; ++_i29)
         {
-          var elem20 = null;
-          elem20 = new ttypes.Location();
-          elem20.read(input);
-          this.projectedPath.push(elem20);
+          var elem30 = null;
+          elem30 = new ttypes.Location();
+          elem30.read(input);
+          this.projectedPath.push(elem30);
         }
         input.readSetEnd();
       } else {
@@ -235,15 +331,15 @@ Iteration.prototype.write = function(output) {
     output.writeBool(this.clearPreviousEnvelope);
     output.writeFieldEnd();
   }
-  if (this.newEnvelopeNodesCells !== null && this.newEnvelopeNodesCells !== undefined) {
-    output.writeFieldBegin('newEnvelopeNodesCells', Thrift.Type.SET, 3);
-    output.writeSetBegin(Thrift.Type.STRUCT, this.newEnvelopeNodesCells.length);
-    for (var iter21 in this.newEnvelopeNodesCells)
+  if (this.newEnvelopeNodes !== null && this.newEnvelopeNodes !== undefined) {
+    output.writeFieldBegin('newEnvelopeNodes', Thrift.Type.SET, 3);
+    output.writeSetBegin(Thrift.Type.STRUCT, this.newEnvelopeNodes.length);
+    for (var iter31 in this.newEnvelopeNodes)
     {
-      if (this.newEnvelopeNodesCells.hasOwnProperty(iter21))
+      if (this.newEnvelopeNodes.hasOwnProperty(iter31))
       {
-        iter21 = this.newEnvelopeNodesCells[iter21];
-        iter21.write(output);
+        iter31 = this.newEnvelopeNodes[iter31];
+        iter31.write(output);
       }
     }
     output.writeSetEnd();
@@ -254,15 +350,15 @@ Iteration.prototype.write = function(output) {
     output.writeBool(this.clearPreviousBackup);
     output.writeFieldEnd();
   }
-  if (this.newBackedUpCells !== null && this.newBackedUpCells !== undefined) {
-    output.writeFieldBegin('newBackedUpCells', Thrift.Type.SET, 5);
-    output.writeSetBegin(Thrift.Type.STRUCT, this.newBackedUpCells.length);
-    for (var iter22 in this.newBackedUpCells)
+  if (this.newBackedUpNodes !== null && this.newBackedUpNodes !== undefined) {
+    output.writeFieldBegin('newBackedUpNodes', Thrift.Type.SET, 5);
+    output.writeSetBegin(Thrift.Type.STRUCT, this.newBackedUpNodes.length);
+    for (var iter32 in this.newBackedUpNodes)
     {
-      if (this.newBackedUpCells.hasOwnProperty(iter22))
+      if (this.newBackedUpNodes.hasOwnProperty(iter32))
       {
-        iter22 = this.newBackedUpCells[iter22];
-        iter22.write(output);
+        iter32 = this.newBackedUpNodes[iter32];
+        iter32.write(output);
       }
     }
     output.writeSetEnd();
@@ -271,12 +367,12 @@ Iteration.prototype.write = function(output) {
   if (this.projectedPath !== null && this.projectedPath !== undefined) {
     output.writeFieldBegin('projectedPath', Thrift.Type.SET, 6);
     output.writeSetBegin(Thrift.Type.STRUCT, this.projectedPath.length);
-    for (var iter23 in this.projectedPath)
+    for (var iter33 in this.projectedPath)
     {
-      if (this.projectedPath.hasOwnProperty(iter23))
+      if (this.projectedPath.hasOwnProperty(iter33))
       {
-        iter23 = this.projectedPath[iter23];
-        iter23.write(output);
+        iter33 = this.projectedPath[iter33];
+        iter33.write(output);
       }
     }
     output.writeSetEnd();
@@ -319,19 +415,19 @@ IterationBundle.prototype.read = function(input) {
     {
       case 1:
       if (ftype == Thrift.Type.LIST) {
-        var _size24 = 0;
-        var _rtmp328;
+        var _size34 = 0;
+        var _rtmp338;
         this.iterations = [];
-        var _etype27 = 0;
-        _rtmp328 = input.readListBegin();
-        _etype27 = _rtmp328.etype;
-        _size24 = _rtmp328.size;
-        for (var _i29 = 0; _i29 < _size24; ++_i29)
+        var _etype37 = 0;
+        _rtmp338 = input.readListBegin();
+        _etype37 = _rtmp338.etype;
+        _size34 = _rtmp338.size;
+        for (var _i39 = 0; _i39 < _size34; ++_i39)
         {
-          var elem30 = null;
-          elem30 = new ttypes.Iteration();
-          elem30.read(input);
-          this.iterations.push(elem30);
+          var elem40 = null;
+          elem40 = new ttypes.Iteration();
+          elem40.read(input);
+          this.iterations.push(elem40);
         }
         input.readListEnd();
       } else {
@@ -359,12 +455,12 @@ IterationBundle.prototype.write = function(output) {
   if (this.iterations !== null && this.iterations !== undefined) {
     output.writeFieldBegin('iterations', Thrift.Type.LIST, 1);
     output.writeListBegin(Thrift.Type.STRUCT, this.iterations.length);
-    for (var iter31 in this.iterations)
+    for (var iter41 in this.iterations)
     {
-      if (this.iterations.hasOwnProperty(iter31))
+      if (this.iterations.hasOwnProperty(iter41))
       {
-        iter31 = this.iterations[iter31];
-        iter31.write(output);
+        iter41 = this.iterations[iter41];
+        iter41.write(output);
       }
     }
     output.writeListEnd();
@@ -452,19 +548,19 @@ Init.prototype.read = function(input) {
       break;
       case 4:
       if (ftype == Thrift.Type.LIST) {
-        var _size32 = 0;
-        var _rtmp336;
+        var _size42 = 0;
+        var _rtmp346;
         this.goals = [];
-        var _etype35 = 0;
-        _rtmp336 = input.readListBegin();
-        _etype35 = _rtmp336.etype;
-        _size32 = _rtmp336.size;
-        for (var _i37 = 0; _i37 < _size32; ++_i37)
+        var _etype45 = 0;
+        _rtmp346 = input.readListBegin();
+        _etype45 = _rtmp346.etype;
+        _size42 = _rtmp346.size;
+        for (var _i47 = 0; _i47 < _size42; ++_i47)
         {
-          var elem38 = null;
-          elem38 = new ttypes.Location();
-          elem38.read(input);
-          this.goals.push(elem38);
+          var elem48 = null;
+          elem48 = new ttypes.Location();
+          elem48.read(input);
+          this.goals.push(elem48);
         }
         input.readListEnd();
       } else {
@@ -473,19 +569,19 @@ Init.prototype.read = function(input) {
       break;
       case 5:
       if (ftype == Thrift.Type.SET) {
-        var _size39 = 0;
-        var _rtmp343;
+        var _size49 = 0;
+        var _rtmp353;
         this.blockedCells = [];
-        var _etype42 = 0;
-        _rtmp343 = input.readSetBegin();
-        _etype42 = _rtmp343.etype;
-        _size39 = _rtmp343.size;
-        for (var _i44 = 0; _i44 < _size39; ++_i44)
+        var _etype52 = 0;
+        _rtmp353 = input.readSetBegin();
+        _etype52 = _rtmp353.etype;
+        _size49 = _rtmp353.size;
+        for (var _i54 = 0; _i54 < _size49; ++_i54)
         {
-          var elem45 = null;
-          elem45 = new ttypes.Location();
-          elem45.read(input);
-          this.blockedCells.push(elem45);
+          var elem55 = null;
+          elem55 = new ttypes.Location();
+          elem55.read(input);
+          this.blockedCells.push(elem55);
         }
         input.readSetEnd();
       } else {
@@ -521,12 +617,12 @@ Init.prototype.write = function(output) {
   if (this.goals !== null && this.goals !== undefined) {
     output.writeFieldBegin('goals', Thrift.Type.LIST, 4);
     output.writeListBegin(Thrift.Type.STRUCT, this.goals.length);
-    for (var iter46 in this.goals)
+    for (var iter56 in this.goals)
     {
-      if (this.goals.hasOwnProperty(iter46))
+      if (this.goals.hasOwnProperty(iter56))
       {
-        iter46 = this.goals[iter46];
-        iter46.write(output);
+        iter56 = this.goals[iter56];
+        iter56.write(output);
       }
     }
     output.writeListEnd();
@@ -535,12 +631,12 @@ Init.prototype.write = function(output) {
   if (this.blockedCells !== null && this.blockedCells !== undefined) {
     output.writeFieldBegin('blockedCells', Thrift.Type.SET, 5);
     output.writeSetBegin(Thrift.Type.STRUCT, this.blockedCells.length);
-    for (var iter47 in this.blockedCells)
+    for (var iter57 in this.blockedCells)
     {
-      if (this.blockedCells.hasOwnProperty(iter47))
+      if (this.blockedCells.hasOwnProperty(iter57))
       {
-        iter47 = this.blockedCells[iter47];
-        iter47.write(output);
+        iter57 = this.blockedCells[iter57];
+        iter57.write(output);
       }
     }
     output.writeSetEnd();

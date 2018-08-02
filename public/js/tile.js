@@ -1,8 +1,10 @@
 import * as PIXIHook from "./lib/pixi.js";
-import {Visualizer} from "./visualizer.js";
+import Visualizer from "./visualizer.js";
 
 //constant side length. We scale grid cells to make them fit into container
 export const CELL_SIDE_LENGTH = 30;
+
+const importantCellTypes = {};
 
 export class Tile {
   constructor(x, y) {
@@ -58,7 +60,10 @@ export class Tile {
         const posY = CELL_SIDE_LENGTH * y;
 
         let side = CELL_SIDE_LENGTH;
-        if (scale * CELL_SIDE_LENGTH < 1) side = 1/scale
+        //cells marked as visually important are blown up
+        if (scale * CELL_SIDE_LENGTH < 1) {
+          side = 1/scale;
+        }
 
         this._graphic.beginFill(row[x])
           .drawRect(posX, posY, side, side)
@@ -70,4 +75,10 @@ export class Tile {
   }
 
   getGraphic() { return this._graphic; }
+}
+
+Tile.setImportantCells = function() {
+  for (let cellType of arguments) {
+    importantCellTypes[cellType] = true;
+  }
 }

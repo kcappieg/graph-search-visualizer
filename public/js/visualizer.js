@@ -2,7 +2,7 @@ import * as PIXIHook from "./lib/pixi.js";
 import {Tile, CELL_SIDE_LENGTH} from "./tile.js";
 
 const AGENT_COLOR = 0xFFA500;
-const MAX_TILES = 30000
+const MAX_TILES = 10000
 
 function initCircle(color) {
   return new PIXI.Graphics()
@@ -28,7 +28,7 @@ function findNearestSquare(num) {
   return Math.ceil(Math.sqrt(num));
 }
 
-export class Visualizer {
+export default class Visualizer {
   /**
    *  @note Integer overflow not guarded against
    *  @param width In grid cells
@@ -251,6 +251,10 @@ export class Visualizer {
   setCellRequestFunction(func) {
     this._requestCellInfo = func
   }
+
+  destroy() {
+    this._app.stage.destroy({children: true});
+  }
 }
 
 //define constants for adding or replacing cells
@@ -291,8 +295,9 @@ Object.defineProperty(Visualizer.prototype, 'PATH_PROJECTION', {
   configurable: false
 });
 
+Tile.setImportantCells(Visualizer.prototype.BLOCKED, Visualizer.prototype.PATH_PROJECTION);
 
-export class CellInfo {
+class CellInfo {
   constructor () {
     this.textBox = new PIXI.Graphics();
     this.textBox.visible = true;
@@ -300,7 +305,7 @@ export class CellInfo {
     this._textObj = new PIXI.Text('No cell info', {
       fontSize: 12,
       wordWrap: true,
-      wordWrapWidth: 140,
+      wordWrapWidth: 200,
     });
     this._textObj.position = new PIXI.Point(5, 2);
 
@@ -322,11 +327,12 @@ export class CellInfo {
 
   _draw() {
     const height = this._textObj.height + 4;
+    const width = this._textObj.width + 10;
 
     this.textBox.clear()
       .lineStyle(1, 0)
       .beginFill(0xFFFFFF)
-      .drawRoundedRect(0, 0, 150, height, 5)
+      .drawRoundedRect(0, 0, width, height, 5)
       .endFill();
   }
 }

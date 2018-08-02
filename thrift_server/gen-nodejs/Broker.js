@@ -178,18 +178,18 @@ Broker_initialize_result.prototype.write = function(output) {
   return;
 };
 
-var Broker_publishIteration_args = function(args) {
-  this.itData = null;
+var Broker_publishIterations_args = function(args) {
+  this.itDataList = null;
   if (args) {
-    if (args.itData !== undefined && args.itData !== null) {
-      this.itData = new ttypes.Iteration(args.itData);
+    if (args.itDataList !== undefined && args.itDataList !== null) {
+      this.itDataList = Thrift.copyList(args.itDataList, [ttypes.Iteration]);
     } else {
-      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field itData is unset!');
+      throw new Thrift.TProtocolException(Thrift.TProtocolExceptionType.UNKNOWN, 'Required field itDataList is unset!');
     }
   }
 };
-Broker_publishIteration_args.prototype = {};
-Broker_publishIteration_args.prototype.read = function(input) {
+Broker_publishIterations_args.prototype = {};
+Broker_publishIterations_args.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -203,9 +203,22 @@ Broker_publishIteration_args.prototype.read = function(input) {
     switch (fid)
     {
       case 1:
-      if (ftype == Thrift.Type.STRUCT) {
-        this.itData = new ttypes.Iteration();
-        this.itData.read(input);
+      if (ftype == Thrift.Type.LIST) {
+        var _size58 = 0;
+        var _rtmp362;
+        this.itDataList = [];
+        var _etype61 = 0;
+        _rtmp362 = input.readListBegin();
+        _etype61 = _rtmp362.etype;
+        _size58 = _rtmp362.size;
+        for (var _i63 = 0; _i63 < _size58; ++_i63)
+        {
+          var elem64 = null;
+          elem64 = new ttypes.Iteration();
+          elem64.read(input);
+          this.itDataList.push(elem64);
+        }
+        input.readListEnd();
       } else {
         input.skip(ftype);
       }
@@ -222,11 +235,20 @@ Broker_publishIteration_args.prototype.read = function(input) {
   return;
 };
 
-Broker_publishIteration_args.prototype.write = function(output) {
-  output.writeStructBegin('Broker_publishIteration_args');
-  if (this.itData !== null && this.itData !== undefined) {
-    output.writeFieldBegin('itData', Thrift.Type.STRUCT, 1);
-    this.itData.write(output);
+Broker_publishIterations_args.prototype.write = function(output) {
+  output.writeStructBegin('Broker_publishIterations_args');
+  if (this.itDataList !== null && this.itDataList !== undefined) {
+    output.writeFieldBegin('itDataList', Thrift.Type.LIST, 1);
+    output.writeListBegin(Thrift.Type.STRUCT, this.itDataList.length);
+    for (var iter65 in this.itDataList)
+    {
+      if (this.itDataList.hasOwnProperty(iter65))
+      {
+        iter65 = this.itDataList[iter65];
+        iter65.write(output);
+      }
+    }
+    output.writeListEnd();
     output.writeFieldEnd();
   }
   output.writeFieldStop();
@@ -234,10 +256,10 @@ Broker_publishIteration_args.prototype.write = function(output) {
   return;
 };
 
-var Broker_publishIteration_result = function(args) {
+var Broker_publishIterations_result = function(args) {
 };
-Broker_publishIteration_result.prototype = {};
-Broker_publishIteration_result.prototype.read = function(input) {
+Broker_publishIterations_result.prototype = {};
+Broker_publishIterations_result.prototype.read = function(input) {
   input.readStructBegin();
   while (true)
   {
@@ -255,8 +277,8 @@ Broker_publishIteration_result.prototype.read = function(input) {
   return;
 };
 
-Broker_publishIteration_result.prototype.write = function(output) {
-  output.writeStructBegin('Broker_publishIteration_result');
+Broker_publishIterations_result.prototype.write = function(output) {
+  output.writeStructBegin('Broker_publishIterations_result');
   output.writeFieldStop();
   output.writeStructEnd();
   return;
@@ -587,7 +609,7 @@ BrokerClient.prototype.send_initialize = function(initData) {
   output.writeMessageEnd();
   return this.output.flush();
 };
-BrokerClient.prototype.publishIteration = function(itData, callback) {
+BrokerClient.prototype.publishIterations = function(itDataList, callback) {
   this._seqid = this.new_seqid();
   if (callback === undefined) {
     var _defer = Q.defer();
@@ -598,21 +620,21 @@ BrokerClient.prototype.publishIteration = function(itData, callback) {
         _defer.resolve(result);
       }
     };
-    this.send_publishIteration(itData);
+    this.send_publishIterations(itDataList);
     return _defer.promise;
   } else {
     this._reqs[this.seqid()] = callback;
-    this.send_publishIteration(itData);
+    this.send_publishIterations(itDataList);
   }
 };
 
-BrokerClient.prototype.send_publishIteration = function(itData) {
+BrokerClient.prototype.send_publishIterations = function(itDataList) {
   var output = new this.pClass(this.output);
-  output.writeMessageBegin('publishIteration', Thrift.MessageType.ONEWAY, this.seqid());
+  output.writeMessageBegin('publishIterations', Thrift.MessageType.ONEWAY, this.seqid());
   var params = {
-    itData: itData
+    itDataList: itDataList
   };
-  var args = new Broker_publishIteration_args(params);
+  var args = new Broker_publishIterations_args(params);
   args.write(output);
   output.writeMessageEnd();
   return this.output.flush();
@@ -781,11 +803,11 @@ BrokerProcessor.prototype.process_initialize = function(seqid, input, output) {
   this._handler.initialize(args.initData);
 }
 ;
-BrokerProcessor.prototype.process_publishIteration = function(seqid, input, output) {
-  var args = new Broker_publishIteration_args();
+BrokerProcessor.prototype.process_publishIterations = function(seqid, input, output) {
+  var args = new Broker_publishIterations_args();
   args.read(input);
   input.readMessageEnd();
-  this._handler.publishIteration(args.itData);
+  this._handler.publishIterations(args.itDataList);
 }
 ;
 BrokerProcessor.prototype.process_getInitData = function(seqid, input, output) {

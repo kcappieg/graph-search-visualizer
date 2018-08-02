@@ -5,12 +5,17 @@ struct Location {
   2: required i32 y
 }
 
+struct Node {
+  1: required Location loc,
+  2: optional map<string, string> data
+}
+
 struct Iteration {
   1: required Location agentLocation,
   2: required bool clearPreviousEnvelope,
-  3: required set<Location> newEnvelopeNodesCells,
+  3: required set<Node> newEnvelopeNodes,
   4: optional bool clearPreviousBackup,
-  5: optional set<Location> newBackedUpCells,
+  5: optional set<Node> newBackedUpNodes,
   6: optional set<Location> projectedPath
 }
 
@@ -34,7 +39,7 @@ service Broker {
   i32 ping()
 
   oneway void initialize(1:required Init initData),
-  oneway void publishIteration(1:required Iteration itData)
+  oneway void publishIterations(1:required list<Iteration> itDataList)
 
   Init getInitData() throws (1:NoDataException noData)
   IterationBundle getIterations(1:required i32 offset, 2: i32 chunkSize) throws (1:NoDataException noData)

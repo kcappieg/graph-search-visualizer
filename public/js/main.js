@@ -1,30 +1,29 @@
 import * as PIXIHook from "./lib/pixi.js";
-import {Visualizer, CellInfo} from "./visualizer.js";
+import Visualizer from "./visualizer.js";
 import Thrift from "./lib/thrift/thrift.js";
 import {NoDataException} from "./lib/thrift/gen-js/visualizer_types.js";
 import BrokerClient from "./lib/thrift/gen-js/Broker.js";
 
 //Constants
-const WINDOW_TIMEOUT = 2000;
-const CHUNK_SIZE = 10; //consider making this configurable
+const TIMEOUT_MS = 2000;
+const CHUNK_SIZE = 500; //consider making this configurable
 const MAX_BUFFER_SIZE = 5000; //soft maximum. If pollForUpdates requests a chunk size that will exceed this limit, no errors
 
 //State
 let visualizer;
-let buffer = [];
-let bufferOverflow = [];
-let nextIterationToRender = 0;
-let initialized = false;
-let deltaTime = 0;
+let buffer;
+let bufferOverflow;
+let nextIterationToRender;
+let iterationDisplay;
+let deltaTime;
 
 //for tracking visualization
-let expandedCells = [];
-let backedUpCells = [];
-let projection = [];
+let expandedCells;
+let backedUpCells;
+let projection;
 
 //will be indexed by x,y
-const cellIndexBacking = {};
-const cellIndex = new Proxy(cellIndexBacking, {
+const cellIndexHandler = {
   get: function(backing, prop) {
     if (prop == 'backing') return backing;
 
@@ -34,8 +33,11 @@ const cellIndex = new Proxy(cellIndexBacking, {
     if (!backing[numProp]) backing[numProp] = {};
     return backing[numProp];
   },
-  set: function(){/*noop*/}
-})
+  set: function(){
+    throw new Error('Do not set the x value for the Cell Index. It is set for you');
+  }
+}
+let cellIndex;
 
 //RPC objects
 const transport = new Thrift.TXHRTransport("/broker");
@@ -46,16 +48,16 @@ const client    = new BrokerClient(protocol);
   Control Vars / Access Functions
 ***********************************/
 //Offset
-let offset = 0; //not providing access function yet. Messing with offset must be handled gracefully
+let offset;
 
 //Polling
 let continuePolling = true;
 let timeoutId;
-export const stopPolling = () => {
+const stopPolling = () => {
   continuePolling = false;
   if (!!timeoutId) clearTimeout(timeoutId);
 }
-export const startPolling = () => {
+const startPolling = () => {
   if (!continuePolling) {
     continuePolling = true;
     poll();
@@ -64,49 +66,88 @@ export const startPolling = () => {
 
 //Animation Speed
 let animationSpeed = 1;
-export const getAnimationSpeed = () => animationSpeed;
-export const setAnimationSpeed = (newSpeed) => {
+const getAnimationSpeed = () => animationSpeed;
+const setAnimationSpeed = (newSpeed) => {
   animationSpeed = newSpeed;
 
-  if (!initialized) return;
+  if (!visualizer) return;
 
   visualizer.ticker.speed = newSpeed;
 }
 
-/* Below is PoC for adding text box to the canvas*/
-// export const doTestText = () => {
-//   testText.textBox.position = new PIXI.Point(20, 20);
-//   visualizer._app.stage.addChild(testText.textBox);
-// }
+//Animation Mode
+const PLAY = Symbol();
+const STOP = Symbol();
+const STEP = Symbol();
+let animationMode;
+const play = () => animationMode = PLAY;
+const stop = () => animationMode = STOP;
+const step = () => animationMode = STEP;
 
 /*************************
-  RPC / Animate Procedures
+  RPC / Init procedures
 *************************/
+let initInProgress = false;
 /**
- *  Do not call this function twice!!! (Race condition with your own request. Stupid...)
+ *  Subsequent calls after first reinitializes the visualizer
+ *  @param animationHook Function that takes an object with these properties:
+ *    - iterationNumber: the iteration number being displayed (1-indexed, not 0-indexed)
+ *    - renderedIterations: The raw iteration data for all iterations rendered this animation frame
  */
-export async function init() {
-  if (initialized) return;
+async function init(container, animationHook) {
+  if (initInProgress) return;
+  initInProgress = true;
+
+  animationMode = STOP;
+
+  if (visualizer) {
+    visualizer.ticker.stop();
+    visualizer.destroy();
+    visualizer = null;
+  }
+  if (!!timeoutId) clearTimeout(timeoutId);
+  timeoutId = null;
+
+  offset = 0;
+
+  buffer = [];
+  bufferOverflow = [];
+  nextIterationToRender = 0;
+  iterationDisplay = 0;
+  deltaTime = 0;
+
+  expandedCells = [];
+  backedUpCells = [];
+  projection = [];
+
+  cellIndex = new Proxy({}, cellIndexHandler);
+
   const pingResult = await new Promise(resolve => {
     client.ping(result => resolve(result));
   });
   console.log('Ping resolved with ' + pingResult);
 
   continuePolling = true;
-  poll();
+  let initialized = false;
+  while (continuePolling) {
+    initialized = await new Promise(resolve => {
+      client.getInitData(result => resolve(getInitDataCallback(result, container, animationHook)));
+    });
+
+    if (initialized) break;
+  }
+
+  initInProgress = false;
+  if (initialized) {
+    timeoutId = setTimeout(poll, 0); //non-blocking invocation
+    return 'Polling';
+  }
+  return 'Uninitialized';
 }
 
 async function poll() {
   timeoutId = null;
   let flushed = false;
-
-  if (!initialized) {
-    initialized = await new Promise(resolve => {
-      client.getInitData(result => resolve(getInitDataCallback(result)))
-    });
-
-    flushed = true; //to prevent polling for iterations
-  }
 
   while (!flushed && continuePolling && bufferOverflow.length <= MAX_BUFFER_SIZE) {
     const result = await new Promise((resolve) => {
@@ -127,16 +168,16 @@ async function poll() {
     offset += result.iterations.length;
   }
   
-  if (continuePolling) timeoutId = window.setTimeout(poll, WINDOW_TIMEOUT);
+  if (continuePolling) timeoutId = setTimeout(poll, TIMEOUT_MS);
 }
 
-function getInitDataCallback(result) {
+function getInitDataCallback(result, container, animationHook) {
   if (result instanceof NoDataException) {
     console.log('Data not initialized');
     return false;
   }
 
-  visualizer = new Visualizer(result.width, result.height, document.getElementById('grid-container'));
+  visualizer = new Visualizer(result.width, result.height, container);
 
   visualizer.setAgentLocation(result.start.x, result.start.y);
 
@@ -151,14 +192,14 @@ function getInitDataCallback(result) {
   visualizer.setCellRequestFunction((x, y) => {
     const cell = cellIndex[x][y];
 
-    return !!cell ? {State: cellIndex[x][y].state} : {State: 'Not explored'};
+    return !!cell ? cell.displayInfo : {State: 'Not explored'};
   });
 
   visualizer.redraw();
 
   //set up animation
   visualizer.ticker.speed = animationSpeed;
-  visualizer.ticker.add(getAnimationFunction(visualizer));
+  visualizer.ticker.add(getAnimationFunction(visualizer, animationHook));
   visualizer.ticker.start();
 
   //debug purposes
@@ -167,16 +208,26 @@ function getInitDataCallback(result) {
   return true;
 };
 
-//ticker function
-function getAnimationFunction(visualizer) {
+/***************************
+    Animation Function
+***************************/
+function getAnimationFunction(visualizer, hook) {
   return function animate() {
     let it = buffer[nextIterationToRender];
-    if (!it) return;
+    let numIterationsToRender = 0;
 
-    deltaTime += visualizer.ticker.deltaTime;
-    const numIterationsToRender = Math.floor(deltaTime);
-    deltaTime -= numIterationsToRender;
+    if (!it || animationMode === STOP) {//if no iterations to render, effectively pause
+      deltaTime = 0;
+    } else if (animationMode === STEP) {
+      numIterationsToRender = 1;
+      deltaTime = 0;
+    } else {
+      deltaTime += visualizer.ticker.deltaTime;
+      numIterationsToRender = Math.floor(deltaTime);
+      deltaTime -= numIterationsToRender;
+    }
 
+    const renderedIterations = [];
     for (let i = 0; i < numIterationsToRender; i++) {
       if (!it) break;
 
@@ -189,8 +240,8 @@ function getAnimationFunction(visualizer) {
         expandedCells = [];
       }
 
-      for (let iterationCell of it.newEnvelopeNodesCells) {
-        updateCellState(iterationCell, 'EXPANDED', visualizer, expandedCells);
+      for (let node of it.newEnvelopeNodes) {
+        updateCellState(node.loc, 'EXPANDED', visualizer, expandedCells, node.data);
       }
 
       //BACKUP
@@ -202,9 +253,9 @@ function getAnimationFunction(visualizer) {
         backedUpCells = [];
       }
 
-      if (!!it.newBackedUpCells) {
-        for (let iterationCell of it.newBackedUpCells) {
-          updateCellState(iterationCell, 'BACKED_UP', visualizer, backedUpCells);
+      if (!!it.newBackedUpNodes) {
+        for (let node of it.newBackedUpNodes) {
+          updateCellState(node.loc, 'BACKED_UP', visualizer, backedUpCells, node.data);
         }
       }
 
@@ -226,6 +277,7 @@ function getAnimationFunction(visualizer) {
       visualizer.setAgentLocation(it.agentLocation.x, it.agentLocation.y);
       
       nextIterationToRender++;
+      iterationDisplay++;
 
       //reset buffer
       if (buffer.length === nextIterationToRender) {
@@ -234,14 +286,23 @@ function getAnimationFunction(visualizer) {
         nextIterationToRender = 0;
       }
 
+      renderedIterations.push(it);
+
       it = buffer[nextIterationToRender];
     }
+
+    hook({
+      iterationNumber: iterationDisplay + 1,
+      renderedIterations,
+    });
+
+    if (animationMode === STEP) animationMode = STOP;
 
     visualizer.redraw();
   }
 }
 
-function updateCellState(iterationCell, newState, visualizer, storageArray) {
+function updateCellState(iterationCell, newState, visualizer, storageArray, displayInfo) {
   let x = iterationCell.x;
   let y = iterationCell.y;
   let cell = cellIndex[x][y];
@@ -255,6 +316,8 @@ function updateCellState(iterationCell, newState, visualizer, storageArray) {
 
   visualizer.setCell(cell.x, cell.y, visualizer[cell.state]);
   !!storageArray && storageArray.push(cell);
+
+  if (displayInfo) cell.displayInfo = displayInfo;
 }
 
 class Cell {
@@ -291,4 +354,14 @@ class Cell {
   clearState(stateName) {
     this._stateFlags[stateName] = false;
   }
+
+  get displayInfo() {
+    return Object.assign({State: this.state}, this._info);
+  }
+
+  set displayInfo(newInfo) {
+    this._info = newInfo;
+  }
 }
+
+export {startPolling, stopPolling, getAnimationSpeed, setAnimationSpeed, play, stop, step, init};
