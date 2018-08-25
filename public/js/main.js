@@ -96,7 +96,7 @@ const getScale = () => { return !visualizer ? 0 : visualizer.scale.toFixed(5); }
 const zoomOnAgent = (newScale) => {
   if (!visualizer) return 0;
 
-  visualizer.rescale(newScale);
+  if (newScale !== visualizer.scale) visualizer.rescale(newScale);
   visualizer.center(currentAgentState.x, currentAgentState.y);
 
   return getScale();
