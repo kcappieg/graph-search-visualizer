@@ -3,11 +3,14 @@ const types = require('./gen-nodejs/visualizer_types.js');
 
 const MAX_BUFFER_SIZE = 1000;
 
-let privateInitData = null;//getDemoInit();
-let buffers;// = [getDemoIterations()]; //buffer list with one initial buffer
+//Actual
+let privateInitData = null;
+let buffers;
+//Test
+// let privateInitData = getDemoInit();
+// let buffers = [getDemoIterations()]; //buffer list with one initial buffer
+
 let producerBufferIndex = 0; //current buffer for producers
-// let consumerBufferIndex = 0; //current buffer for consumers
-// let consumerNext = 0; //current index in the consumer's current buffer
 
 /**
  *  This class is designed for a single producer / consumer.

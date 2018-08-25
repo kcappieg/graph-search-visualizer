@@ -227,8 +227,37 @@ export default class Visualizer {
     return this;
   }
 
-  repositionStage(x, y) {
+  get scale() {
+    return this._scale;
+  }
+
+  repositionGrid(x, y) {
     this._gridContainer.position = new PIXI.Point(x, y);
+
+    return this;
+  }
+
+  center(x, y) {
+    const stageWidth = this._app.stage.width;
+    const stageHeight = this._app.stage.height;
+    const contWidth = this._container.clientWidth;
+    const contHeight = this._container.clientHeight;
+
+    const width = stageWidth < contWidth ? stageWidth : contWidth;
+    const height = stageHeight < contHeight ? stageHeight : contHeight;
+
+    const CELL_LENGTH = this._scale * CELL_SIDE_LENGTH;
+
+    const cellX = x * CELL_LENGTH;
+    const cellY = y * CELL_LENGTH;
+
+    const widthBuffer = (width / 2) - CELL_LENGTH / 2 - cellX;
+    const heightBuffer = (height / 2) - CELL_LENGTH / 2 - cellY;
+
+    return this.repositionGrid(
+      widthBuffer,
+      heightBuffer
+    );
   }
 
   redraw() {

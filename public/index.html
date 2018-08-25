@@ -18,13 +18,21 @@
     <script src="./js/tile.js" type="module"></script>
     <script src="./js/main.js" type="module" async=true></script>
     <script type="module">
-      import {startPolling, stopPolling, getAnimationSpeed, setAnimationSpeed, play, stop, step, init} from "./js/main.js";
+      import {
+        startPolling, stopPolling,
+        getAnimationSpeed, setAnimationSpeed,
+        play, stop, step,
+        init,
+        resetScale, getScale, zoomOnAgent
+      } from "./js/main.js";
       const initButton = document.getElementById('init-button');
       const statusDisplay = document.getElementById('status');
       const gridContainer = document.getElementById('grid-container');
       const animationSpeedInput = document.getElementById('animation-speed-control');
       const animationStateDisplay = document.getElementById('animation-state');
       const iterationCountDisplay = document.getElementById('iteration-count');
+      const scaleDisplay = document.getElementById('scale-display');
+      const scaleInput = document.getElementById('new-scale');
 
       const iterationCountUpdater = iterationInfo => {
         iterationCountDisplay.textContent = iterationInfo.iterationNumber;
@@ -36,8 +44,10 @@
         animationStateDisplay.textContent = 'STOP';
         statusDisplay.textContent = 'Initializing';
         iterationCountDisplay.textContent = '0';
+        scaleDisplay.textContent = '0';
 
         statusDisplay.textContent = await init(gridContainer, iterationCountUpdater);
+        scaleDisplay.textContent = getScale();
       }
 
       window.startPolling = () => {
@@ -47,22 +57,28 @@
       window.stopPolling = () => {
         statusDisplay.textContent = 'Not Polling';
         stopPolling();
-      }
+      };
       window.setAnimationSpeed = () => {
         const newSpeed = parseFloat(animationSpeedInput.value);
         setAnimationSpeed(newSpeed);
-      }
+      };
       window.play = () => {
         animationStateDisplay.textContent = 'PLAY';
         play();
-      }
+      };
       window.stop = () => {
         animationStateDisplay.textContent = 'STOP';
         stop();
-      }
+      };
       window.step = () => {
         animationStateDisplay.textContent = 'STEP';
         step();
+      };
+      window.resetScale = () => {
+        scaleDisplay.textContent = resetScale();
+      };
+      window.zoomOnAgent = () => {
+        scaleDisplay.textContent = zoomOnAgent(parseFloat(scaleInput.value));
       }
 
       animationSpeedInput.value = getAnimationSpeed();
@@ -75,7 +91,9 @@
       </div>
       <div class="row no-gutters">
         <div class="col-12 col-md-8 col-lg-10" id="grid-container" style="border: 1px solid gray; min-height: 900px"></div>
+
         <div class="col-12 col-md-4 col-lg-2 p-1 container-fluid p-2" id="controls">
+          <!-- Server Communication -->
           <div class="row no-gutters border-bottom pb-3 d-table">
             <div class="d-table-row">
               <div class="col-6 d-table-cell align-middle">
@@ -90,6 +108,7 @@
               </div>
             </div>
           </div>
+          <!-- Animation Speed -->
           <div class="row no-gutters border-bottom pb-3 d-table">
             <div class="pr-1 d-table-row">
               <div class="col-6 form-group d-table-cell">
@@ -101,6 +120,7 @@
               </div>
             </div>
           </div>
+          <!-- Play / Stop Controls -->
           <div class="row no-gutters border-bottom p-3 d-table">
             <div class="d-table-row">
               <div class="col-4 form-group d-table-cell">
@@ -116,6 +136,25 @@
               </div>
             </div>
           </div>
+          <!-- Scale / Zooming -->
+          <div class="row no-gutters border-bottom py-3 d-table">
+            <div class="d-table-row">
+              <div class="col-6 d-table-cell">Current Scale: <span id="scale-display">0</span></div>
+              <div class="col-6 d-table-cell">
+                <button class="btn btn-info" onclick="resetScale()">Reset</button>
+              </div>
+            </div>
+            <div class="d-table-row">
+              <div class="col-6 d-table-cell form-group">
+                <label for="new-scale">New Scale</label>
+                <input class="form-control" type="number" step="0.00000001" id="new-scale" value=1 />
+              </div>
+              <div class="col-6 d-table-cell align-middle">
+                <button class="btn btn-primary" onclick="zoomOnAgent()">Zoom on Agent</button>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

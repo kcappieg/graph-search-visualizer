@@ -16,6 +16,7 @@ let bufferOverflow;
 let nextIterationToRender;
 let iterationDisplay;
 let deltaTime;
+let currentAgentState;
 
 //for tracking visualization
 let expandedCells;
@@ -82,6 +83,24 @@ let animationMode;
 const play = () => animationMode = PLAY;
 const stop = () => animationMode = STOP;
 const step = () => animationMode = STEP;
+
+const resetScale = () => {
+  if (!visualizer) return 0;
+
+  visualizer.rescale();
+  visualizer.repositionGrid(0, 0);
+
+  return getScale();
+}
+const getScale = () => { return !visualizer ? 0 : visualizer.scale.toFixed(5); }
+const zoomOnAgent = (newScale) => {
+  if (!visualizer) return 0;
+
+  visualizer.rescale(newScale);
+  visualizer.center(currentAgentState.x, currentAgentState.y);
+
+  return getScale();
+}
 
 /*************************
   RPC / Init procedures
@@ -178,6 +197,7 @@ function getInitDataCallback(result, container, animationHook) {
   visualizer = new Visualizer(result.width, result.height, container);
 
   visualizer.setAgentLocation(result.start.x, result.start.y);
+  currentAgentState = {x: result.start.x, y: result.start.y};
 
   for (const goal of result.goals) {
     visualizer.addGoal(goal.x, goal.y);
@@ -190,7 +210,10 @@ function getInitDataCallback(result, container, animationHook) {
   visualizer.setCellRequestFunction((x, y) => {
     const cell = cellIndex[x][y];
 
-    return !!cell ? cell.displayInfo : {State: 'Not explored'};
+    const display = !!cell ? cell.displayInfo : {State: 'Not explored'};
+    if (x === currentAgentState.x && y === currentAgentState.y) display.State = 'AGENT';
+
+    return display;
   });
 
   visualizer.redraw();
@@ -275,6 +298,7 @@ function getAnimationFunction(visualizer, hook) {
       }
 
       visualizer.setAgentLocation(it.agentLocation.x, it.agentLocation.y);
+      currentAgentState = {x: it.agentLocation.x, y: it.agentLocation.y};
       
       nextIterationToRender++;
       iterationDisplay++;
@@ -364,4 +388,10 @@ class Cell {
   }
 }
 
-export {startPolling, stopPolling, getAnimationSpeed, setAnimationSpeed, play, stop, step, init};
+export {
+  startPolling, stopPolling,
+  getAnimationSpeed, setAnimationSpeed,
+  play, stop, step,
+  init,
+  resetScale, getScale, zoomOnAgent
+};
